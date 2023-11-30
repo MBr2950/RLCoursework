@@ -13,6 +13,7 @@ observation, info = env.reset()
 D = list()#todo: initialise this list by allowing agent to wander randomly for some time steps 
 
 
+
 pi1 = ActorNetwork()
 pi2 = ActorNetwork()
 q1 = CriticNetwork()
@@ -29,7 +30,7 @@ for i in range(1000):
     while (True):
         
         #chooses action, notes new information
-        action = env.action_space.sample(pi1.ChooseAction())
+        action = env.action_space.sample(pi1.ChooseAction(observation, "???????")) + N
 
         observation, reward, terminated, truncuated, info = env.step(action)
         D.append("{current state??????}", action, reward, observation)
