@@ -64,18 +64,19 @@ env.close()
 
 
 ## The Neural Networks
-class ActorNetwork:
+class ActorNetwork(torch.nn.module):
 
     def __init__(self):
         #initialises the network
         #we need to decide what our network will look like
-        pass
+        self.layer1 = torch.nn.Linear(1, 10)
 
-    def ChooseAction(State):
+
+    def ChooseAction(self, State):
         #uses the NN to estimate an action for a given state
         pass
     
-    def Update():
+    def Update(self):
         #trains the network
         pass
 
@@ -83,18 +84,18 @@ class ActorNetwork:
         #Updates pi2 to match pi1
         pass
 
-class CriticNetwork:
+class CriticNetwork(torch.nn.module):
 
     def __init__(self):
         #initialises the network
         #we need to decide what our network will look like
         pass
     
-    def ChooseAction(State):
+    def ChooseAction(self, State):
         #uses the NN to estimate an action for a given state
         pass
     
-    def Update():
+    def Update(self):
         #trains the network
         pass
 
