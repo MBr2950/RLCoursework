@@ -6,8 +6,9 @@
 
 import gymnasium as gym
 import torch
+from torch import nn
 import random
-env = gym.make('Humanoid-v4', render_mode="human")
+env = gym.make('Humanoid-v4', render_mode="human", exclude_current_positions_from_observation=False)
 observation, info = env.reset()
 
 D = list()#todo: initialise this list by allowing agent to wander randomly for some time steps 
@@ -40,6 +41,14 @@ for i in range(1000):
         #
         #
         #
+        pi1.train()
+        # Get each 
+        for batch_idx, (data, target) in enumerate(train_loader):
+            optimizer.zero_grad()
+            output = pi1(data)
+            loss = F.nll_loss(output, target)
+            loss.backward()
+            optimizer.step()
 
         
         #update the beta thing instead of C here
@@ -69,16 +78,27 @@ class ActorNetwork(torch.nn.module):
     def __init__(self):
         #initialises the network
         #we need to decide what our network will look like
-        self.layer1 = torch.nn.Linear(1, 10)
+        self.NN = nn.Sequential(
+            nn.Linear(46, 500),
+            nn.ReLU(),
+            nn.Linear(500, 100),
+            nn.ReLU(),
+            nn.Linear(100, 32),
+            nn.ReLU(),
+            nn.Linear(32, 16))
 
 
     def ChooseAction(self, State):
         #uses the NN to estimate an action for a given state
-        pass
+        return self.NN(State)
+    
+        #TODO: Add randomisation
     
     def Update(self):
         #trains the network
         pass
+
+        
 
     def Refresh():
         #Updates pi2 to match pi1
@@ -88,12 +108,19 @@ class CriticNetwork(torch.nn.module):
 
     def __init__(self):
         #initialises the network
-        #we need to decide what our network will look like
-        pass
+        self.NN = nn.Sequential(
+            nn.Linear(62, 120),
+            nn.ReLU(),
+            nn.Linear(120, 40),
+            nn.ReLU(),
+            nn.Linear(40, 10),
+            nn.ReLU(),
+            nn.Linear(10, 1))
     
-    def ChooseAction(self, State):
-        #uses the NN to estimate an action for a given state
-        pass
+    def ActionValue(self, State, Action):
+        #uses the NN to estimate the action-value for a given state and action
+
+        return self.NN(State + Action) # + concatentates the 2 lists
     
     def Update(self):
         #trains the network
