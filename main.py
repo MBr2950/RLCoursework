@@ -43,14 +43,9 @@ for i in range(1000):
 
         
         #update the beta thing instead of C here
-        #if i % C == 0:
-        #    q2.Refresh(q1)
-        #
-        #
-        #
-
-
-
+        if i % C == 0:
+            pi2.Refresh(pi1)
+            q2.Refresh(q1)
 
         #ends the episode
         if terminated or truncuated:
@@ -68,6 +63,7 @@ class ActorNetwork:
 
     def __init__(self):
         #initialises the network
+        #self.parameters = []
         #we need to decide what our network will look like
         pass
 
@@ -79,14 +75,17 @@ class ActorNetwork:
         #trains the network
         pass
 
-    def Refresh():
+    def Refresh(pi):
         #Updates pi2 to match pi1
+        for i in range(self.parameters):
+            self.parameters = (Beta * pi.parameters) + (1- Beta)*self.parameters
         pass
 
 class CriticNetwork:
 
     def __init__(self):
         #initialises the network
+        #self.parameters = []
         #we need to decide what our network will look like
         pass
     
@@ -98,6 +97,8 @@ class CriticNetwork:
         #trains the network
         pass
 
-    def Refresh():
+    def Refresh(q):
         #Updates q2 to match q1
+        for i in range(self.parameters):
+            self.parameters = (Beta * q.parameters) + (1- Beta)*self.parameters
         pass
