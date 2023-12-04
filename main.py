@@ -49,7 +49,7 @@ class ActorNetwork(torch.nn.module):
         self.optimizer.step()
         
 
-     def Refresh(pi):
+    def Refresh(self, pi):
         #Updates pi2 to match pi1
         for i in range(self.parameters):
             self.parameters = (Beta * pi.parameters) + (1- Beta)*self.parameters
@@ -81,7 +81,7 @@ class CriticNetwork(torch.nn.module):
         loss.backward()
         self.optimizer.step()
         
-    def Refresh(q):
+    def Refresh(self, q):
             #Updates q2 to match q1
             for i in range(self.parameters):
                 self.parameters = (Beta * q.parameters) + (1- Beta)*self.parameters
