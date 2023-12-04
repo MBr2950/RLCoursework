@@ -49,11 +49,10 @@ class ActorNetwork(torch.nn.module):
         self.optimizer.step()
         
 
-        
-
-    def Refresh():
+     def Refresh(pi):
         #Updates pi2 to match pi1
-        pass
+        for i in range(self.parameters):
+            self.parameters = (Beta * pi.parameters) + (1- Beta)*self.parameters
 
 class CriticNetwork(torch.nn.module):
 
@@ -81,10 +80,12 @@ class CriticNetwork(torch.nn.module):
         loss = nn.functional.huber_loss(y1, y2)
         loss.backward()
         self.optimizer.step()
-
-    def Refresh():
-        #Updates q2 to match q1
-        pass
+        
+    def Refresh(q):
+            #Updates q2 to match q1
+            for i in range(self.parameters):
+                self.parameters = (Beta * q.parameters) + (1- Beta)*self.parameters
+    
 
     
 D = list()#todo: initialise this list by allowing agent to wander randomly for some time steps 
@@ -130,14 +131,9 @@ for i in range(1000):
 
             pi1.Update(q1.ActionValue(transition[0], pi1.ChooseAction(transition[0])))
         #update the beta thing instead of C here
-        #if i % C == 0:
-        #    q2.Refresh(q1)
-        #
-        #
-        #
-
-
-
+        if i % C == 0:
+            pi2.Refresh(pi1)
+            q2.Refresh(q1)
 
         #ends the episode
         if terminated or truncuated:
@@ -149,4 +145,13 @@ env.close()
 
 
 
+
+
+
+    
+       
+
+
+    
+     
 
