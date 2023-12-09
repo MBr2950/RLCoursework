@@ -8,6 +8,7 @@ import gymnasium as gym
 import torch
 from torch import nn
 import random
+import numpy as np
 env = gym.make('Humanoid-v4', render_mode="human", exclude_current_positions_from_observation=False)
 observation, info = env.reset()
 
@@ -111,7 +112,15 @@ for i in range(1000):
     while (True):
         
         #chooses action, notes new information
-        action = env.action_space.sample(pi1.ChooseAction(observation, "???????")) + N
+        action = env.action_space.sample(pi1.ChooseAction(observation))
+
+
+        for i in action:
+            i = i + np.random.normal(0, 0.1)#adds randomisation to action for all 16 limbs,+/- 0.1 max, caps at -0.4 and 0.4
+            if i > 0.4:
+                i = 0.4
+            if i < -0.4:
+                i = -0.4
 
         state = observation
         observation, reward, terminated, truncuated, info = env.step(action)
@@ -131,9 +140,9 @@ for i in range(1000):
 
             pi1.Update(q1.ActionValue(transition[0], pi1.ChooseAction(transition[0])))
         #update the beta thing instead of C here
-        if i % C == 0:
-            pi2.Refresh(pi1)
-            q2.Refresh(q1)
+        
+        pi2.Refresh(pi1)
+        q2.Refresh(q1)
 
         #ends the episode
         if terminated or truncuated:
