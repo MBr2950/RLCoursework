@@ -88,6 +88,10 @@ class CriticNetwork(torch.nn.module):
                 self.parameters = (Beta * q.parameters) + (1- Beta)*self.parameters
     
 
+def DataFunction():
+    print("Current reward:")
+    print("healthy_reward + forward_reward - ctrl_cost - contact_cost: " + reward)
+    print("https://gymnasium.farama.org/environments/mujoco/humanoid/#rewards")
     
 D = list()#todo: initialise this list by allowing agent to wander randomly for some time steps 
 
@@ -103,10 +107,10 @@ q2 = CriticNetwork()
 Beta = 0.1 #Incremental refreshing rate
 minibatch = 5 #Taken from D
 gamma = 0.1 #learning rate
+dataprint = 0
 
 #Main loop, i is number of episodes
 for i in range(1000):
-    N = "something"# do gautian noise or something here ant init
     observation, info = env.reset()
     #an episode
     while (True):
@@ -126,11 +130,13 @@ for i in range(1000):
         observation, reward, terminated, truncuated, info = env.step(action)
         D.append(state, action, reward, observation)
 
+        dataprint += 1
+        if dataprint == 100:
+            dataprint = 0
+            DataFunction(reward)
+
+
         #updates Action-Value estimate (NN)
-        #
-        #
-        #
-        #
         for j in range(minibatch):
             transition = D[random.randint(0, len(D))]
             # Picks a random sample from D 
@@ -139,8 +145,9 @@ for i in range(1000):
             q1.Update(q1y, q1.ActionValue(transition[0], transition[1]))
 
             pi1.Update(q1.ActionValue(transition[0], pi1.ChooseAction(transition[0])))
-        #update the beta thing instead of C here
         
+
+        #update the beta thing instead of C here
         pi2.Refresh(pi1)
         q2.Refresh(q1)
 
