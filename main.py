@@ -9,6 +9,7 @@ import torch
 from torch import nn
 import random
 import numpy as np
+from collections import deque
 env = gym.make('Humanoid-v4', render_mode="human", exclude_current_positions_from_observation=False)
 observation, info = env.reset()
 
@@ -88,8 +89,9 @@ class CriticNetwork(torch.nn.module):
                 self.parameters = (Beta * q.parameters) + (1- Beta)*self.parameters
     
 
-    
-D = list()#todo: initialise this list by allowing agent to wander randomly for some time steps 
+D_size = 1000    
+D = deque()#todo: initialise this list by allowing agent to wander randomly for some time steps 
+# function use idea acame from https://github.com/cookbenjamin/DDPG/blob/master/ddpg.py
 
 
 
@@ -125,6 +127,8 @@ for i in range(1000):
         state = observation
         observation, reward, terminated, truncuated, info = env.step(action)
         D.append(state, action, reward, observation)
+        if D.size > D_size:
+            D.popleft()
 
         #updates Action-Value estimate (NN)
         #
