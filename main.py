@@ -9,7 +9,7 @@ import torch
 from torch import nn
 import random
 import numpy as np
-env = gym.make('Humanoid-v4', exclude_current_positions_from_observation=False)
+env = gym.make('Humanoid-v4',  exclude_current_positions_from_observation=False)
 observation, info = env.reset()
 
 ## The Neural Networks
@@ -133,18 +133,20 @@ dataprint = 0
 for i in range(1000):
     observation, info = env.reset()
     #an episode
+    rewardlist = list()
+
     while (True):
         
         #chooses action, notes new information
         action = pi1.ChooseAction(observation)
 
 
-        for i in action:
-            i = i + np.random.normal(0, 0.1)#adds randomisation to action for all 16 limbs,+/- 0.1 max, caps at -0.4 and 0.4
-            if i > 0.4:
-                i = 0.4
-            if i < -0.4:
-                i = -0.4
+        for j in action:
+            j = j + np.random.normal(0, 0.1)#adds randomisation to action for all 16 limbs,+/- 0.1 max, caps at -0.4 and 0.4
+            if j > 0.4:
+                j = 0.4
+            if j < -0.4:
+                j = -0.4
 
         state = observation
         observation, reward, terminated, truncuated, info = env.step(action)
@@ -153,10 +155,11 @@ for i in range(1000):
         observation = observation.astype(float)
         D.append([state, action, reward, observation])
 
-        dataprint += 1
-        if dataprint == 100:
-            dataprint = 0
-            DataFunction(reward)
+        rewardlist.append(reward)
+        #dataprint += 1
+        #if dataprint == 1000:
+        #    dataprint = 0
+        #    DataFunction(reward)
 
 
         #updates Action-Value estimate (NN)
@@ -178,6 +181,11 @@ for i in range(1000):
         if terminated or truncuated:
             observation, info = env.reset()
             break
+    
+    totreward = 0
+    for rew in rewardlist:
+        totreward += rew
+    print("Episode: " + str(i) + ". Reward Sum = " + str(totreward))
 
 env.close()
 
