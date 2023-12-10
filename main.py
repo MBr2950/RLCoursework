@@ -9,62 +9,76 @@ import torch
 from torch import nn
 import random
 import numpy as np
-env = gym.make('Humanoid-v4', render_mode="human", exclude_current_positions_from_observation=False)
+env = gym.make('Humanoid-v4', exclude_current_positions_from_observation=False)
 observation, info = env.reset()
 
 ## The Neural Networks
-class ActorNetwork(torch.nn.module):
+class ActorNetwork(torch.nn.Module):
 
 
     def __init__(self):
         #initialises the network
         #we need to decide what our network will look like
+        super(ActorNetwork, self).__init__()
         self.NN = nn.Sequential(
-            nn.Linear(46, 500),
+            nn.Linear(378, 500),
             nn.ReLU(),
             nn.Linear(500, 100),
             nn.ReLU(),
             nn.Linear(100, 32),
             nn.ReLU(),
-            nn.Linear(32, 16))
+            nn.Linear(32, 17))
         
         self.optimizer = torch.optim.SGD(self.parameters(), lr=0.01, momentum=0.5)
 
 
     def ChooseAction(self, State):
         #uses the NN to estimate an action for a given state
-        return self.NN(State)
+        State = torch.from_numpy(State).float()
+        return (self.NN(State)).detach().numpy()# converts from np to tensor, then back
     
         #TODO: Add randomisation
     
     def Update(self, values):
         #trains the network
+        values = values.detach().numpy()
         self.optimizer.zero_grad()
-        E = torch.tensor(0)
+        E = 0
         for i in range(len(values)):
-            E += i * values[i]
-        E = round(E)
-        E.backward()
-        E = -E
+            E += (i + 1) * values[i]
+        E1 = torch.tensor(E, requires_grad=True)
+        E1.backward()
+        E1 = -E1
         
         self.optimizer.step()
         
 
     def Refresh(self, pi):
         #Updates pi2 to match pi1
-        for i in range(self.parameters):
-            self.parameters = (Beta * pi.parameters) + (1- Beta)*self.parameters
+        for param1, param2 in zip(self.parameters(), pi.parameters()):
+            param1 = Beta * param1.data + (1-Beta) * param2.data
 
-class CriticNetwork(torch.nn.module):
+       #Inspired by:
+       #https://github.com/DLR-RM/stable-baselines3/issues/93
+       #May need to cite
+
+         
+
+class CriticNetwork(torch.nn.Module):
 
     def __init__(self):
         #initialises the network
+        super(CriticNetwork, self).__init__()
         self.NN = nn.Sequential(
-            nn.Linear(62, 120),
+            nn.Linear(395, 900),
             nn.ReLU(),
-            nn.Linear(120, 40),
+            nn.Linear(900, 300),
             nn.ReLU(),
-            nn.Linear(40, 10),
+            nn.Linear(300, 90),
+            nn.ReLU(),
+            nn.Linear(90, 30),
+            nn.ReLU(),
+            nn.Linear(30, 10),
             nn.ReLU(),
             nn.Linear(10, 1))
         
@@ -72,8 +86,7 @@ class CriticNetwork(torch.nn.module):
     
     def ActionValue(self, State, Action):
         #uses the NN to estimate the action-value for a given state and action
-
-        return self.NN(State + Action) # + concatentates the 2 lists
+        return self.NN(torch.from_numpy(np.concatenate((State, Action))).float())
     
     def Update(self, y1, y2):
         #trains the network
@@ -84,18 +97,25 @@ class CriticNetwork(torch.nn.module):
         
     def Refresh(self, q):
             #Updates q2 to match q1
-            for i in range(self.parameters):
-                self.parameters = (Beta * q.parameters) + (1- Beta)*self.parameters
+            for param1, param2 in zip(self.parameters(), q.parameters()):
+                param1 = Beta * param1.data + (1-Beta) * param2.data
     
 
-def DataFunction():
+def DataFunction(reward):
     print("Current reward:")
-    print("healthy_reward + forward_reward - ctrl_cost - contact_cost: " + reward)
+    print("healthy_reward + forward_reward - ctrl_cost - contact_cost: " + str(reward))
     print("https://gymnasium.farama.org/environments/mujoco/humanoid/#rewards")
     
 D = list()#todo: initialise this list by allowing agent to wander randomly for some time steps 
-
-
+observation, info = env.reset()
+for i in range(1000):
+    action = env.action_space.sample() #pick random action
+    state = observation
+    observation, reward, terminated, truncuated, info = env.step(action)
+    state = state.astype(float)
+    action = action.astype(float)
+    observation = observation.astype(float)
+    D.append([state, action, reward, observation])
 
 pi1 = ActorNetwork()
 pi2 = ActorNetwork()
@@ -116,7 +136,7 @@ for i in range(1000):
     while (True):
         
         #chooses action, notes new information
-        action = env.action_space.sample(pi1.ChooseAction(observation))
+        action = pi1.ChooseAction(observation)
 
 
         for i in action:
@@ -128,7 +148,10 @@ for i in range(1000):
 
         state = observation
         observation, reward, terminated, truncuated, info = env.step(action)
-        D.append(state, action, reward, observation)
+        state = state.astype(float)
+        action = action.astype(float)
+        observation = observation.astype(float)
+        D.append([state, action, reward, observation])
 
         dataprint += 1
         if dataprint == 100:
@@ -138,7 +161,7 @@ for i in range(1000):
 
         #updates Action-Value estimate (NN)
         for j in range(minibatch):
-            transition = D[random.randint(0, len(D))]
+            transition = D[random.randint(0, len(D) - 1)]
             # Picks a random sample from D 
             #0-State, 1- Action, 2- Reward, 3- Observation
             q1y = transition[2] + gamma * q2.ActionValue(transition[3], pi2.ChooseAction(transition[3]))
