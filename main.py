@@ -155,7 +155,7 @@ for i in range(1000):
         #update the beta thing instead of C here
         pi2.Refresh(pi1)
         q2.Refresh(q1)
-
+        env.render()
         #ends the episode
         if terminated or truncuated:
             observation, info = env.reset()
