@@ -56,6 +56,49 @@ class ActorNetwork(nn.Module):
         return actionMeans, actionStdDevs
 
 
+# Neural network for approximating values
+class CriticNetwork(nn.Module):
+    # observationDim, actionDim are integers defining the number of observations 
+    # and actions available in the given model
+    def __init__(self, observationDim, actionDim) -> None:
+        super().__init__()
+
+        # Define neural network properties
+        self.sharedNet = nn.Sequential(
+                nn.Linear(observationDim, 500),
+                nn.ReLU(),
+                nn.Linear(500, 100),
+                nn.ReLU(),
+                nn.Linear(100, 32),
+                nn.ReLU(),
+        )
+
+        # Policy Mean specific Linear Layer
+        self.policyMeanNet = nn.Sequential(
+            nn.Linear(32, actionDim)
+        )
+
+        # Policy Std Dev specific Linear Layer
+        self.policyStdDevNet = nn.Sequential(
+            nn.Linear(32, actionDim)
+        )
+
+
+    # Performs one forward pass on the neural network
+    # Takes in a tensor 'x'
+    # Returns two tensors, 'actionMeans' and 'actionStdDevs', both predicted
+    # from the normal distribution
+    def forward(self, x):
+        sharedFeatures = self.sharedNet(x.float())
+
+        actionMeans = self.policyMeanNet(sharedFeatures)
+        actionStdDevs = torch.log(
+            1 + torch.exp(self.policyStdDevNet(sharedFeatures))
+        )
+
+        return actionMeans, actionStdDevs
+
+
 class REINFORCE:
     """REINFORCE algorithm."""
 
@@ -135,7 +178,7 @@ class REINFORCE:
 env = gym.make("InvertedPendulum-v4")
 wrappedEnv = gym.wrappers.RecordEpisodeStatistics(env, 50)  # Records episode-reward
 
-numEpisodes = int(1e3)  # Total number of episodes
+numEpisodes = int(5e3)  # Total number of episodes
 observationDims = env.observation_space.shape[0]
 actionDims = env.action_space.shape[0]
 seedRewards = []
