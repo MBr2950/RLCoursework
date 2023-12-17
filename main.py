@@ -3,13 +3,13 @@
 
 #  pseudocode:
 #  https://moodle.bath.ac.uk/mod/page/view.php?id=1146241
-
+print("1")    
 import gymnasium as gym
 import torch
 from torch import nn
 import random
 import numpy as np
-env = gym.make('Humanoid-v4', render_mode="human", exclude_current_positions_from_observation=False)
+env = gym.make('Ant-v4', exclude_current_positions_from_observation=False)
 observation, info = env.reset()
 
 ## The Neural Networks
@@ -21,13 +21,13 @@ class ActorNetwork(torch.nn.Module):
         #we need to decide what our network will look like
         super(ActorNetwork, self).__init__()
         self.NN = nn.Sequential(
-            nn.Linear(378, 500),
+            nn.Linear(29, 100),
             nn.ReLU(),
-            nn.Linear(500, 100),
+            nn.Linear(100, 100),
             nn.ReLU(),
             nn.Linear(100, 32),
             nn.ReLU(),
-            nn.Linear(32, 17))
+            nn.Linear(32, 8))
         
         self.optimizer = torch.optim.SGD(self.parameters(), lr=0.01, momentum=0.5)
 
@@ -70,13 +70,13 @@ class CriticNetwork(torch.nn.Module):
         #initialises the network
         super(CriticNetwork, self).__init__()
         self.NN = nn.Sequential(
-            nn.Linear(395, 900),
+            nn.Linear(37, 120),
             nn.ReLU(),
-            nn.Linear(900, 300),
+            nn.Linear(120, 60),
             nn.ReLU(),
-            nn.Linear(300, 90),
+            nn.Linear(60, 45),
             nn.ReLU(),
-            nn.Linear(90, 30),
+            nn.Linear(45, 30),
             nn.ReLU(),
             nn.Linear(30, 10),
             nn.ReLU(),
@@ -101,8 +101,16 @@ class CriticNetwork(torch.nn.Module):
                 param1 = Beta * param1.data + (1-Beta) * param2.data
     
 
-    
+
 D = list()#todo: initialise this list by allowing agent to wander randomly for some time steps 
+
+observation, info = env.reset()
+for i in range(10):
+    state = observation
+    action = np.random.random_sample(size = 8)
+    action = (action - 0.5) * 0.8 #scales properly
+    observation, reward, terminated, truncuated, info = env.step(action)
+    D.append([state, action, reward, observation])
 
 
 
@@ -117,6 +125,7 @@ Beta = 0.1 #Incremental refreshing rate
 minibatch = 5 #Taken from D
 gamma = 0.1 #learning rate
 dataprint = 0
+
 
 #Main loop, i is number of episodes
 for i in range(1000):
@@ -139,7 +148,7 @@ for i in range(1000):
 
         state = observation
         observation, reward, terminated, truncuated, info = env.step(action)
-        D.append(state, action, reward, observation)
+        D.append([state, action, reward, observation])
 
         #updates Action-Value estimate (NN)
         for j in range(minibatch):
