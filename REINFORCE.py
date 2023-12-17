@@ -1,35 +1,35 @@
 # Based off https://gymnasium.farama.org/tutorials/training_agents/reinforce_invpend_gym_v26/#sphx-glr-tutorials-training-agents-reinforce-invpend-gym-v26-py
 
-from torch.distributions.normal import Normal
 import gymnasium as gym
 import numpy as np
-import torch, random
-import torch.nn as nn
-import torch.optim as optim
+import torch
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 # Neural network for function approximation
-class ActorCritic(nn.Module):
+class ActorCritic(torch.nn.Module):
     def __init__(self, inputDims, outputDims):
         super(ActorCritic, self).__init__()
         layers = [
-            nn.Linear(inputDims, 64),
-            nn.ReLU(),
-            nn.Linear(64, 32),
-            nn.ReLU(),
-            nn.Linear(32, 32),
-            nn.ReLU(),
+            torch.nn.Linear(inputDims, 64),
+            torch.nn.ReLU(),
+            torch.nn.Linear(64, 32),
+            torch.nn.ReLU(),
+            torch.nn.Linear(32, 32),
+            torch.nn.ReLU(),
         ]
 
-        self.model = nn.Sequential(*layers)
+        self.model = torch.nn.Sequential(*layers)
 
         # Mean and standard deviation of actions are found, for 
         # sampling actions from a normal distribution
-        self.modelMean = nn.Sequential(
-            nn.Linear(32, outputDims)
+        self.modelMean = torch.nn.Sequential(
+            torch.nn.Linear(32, outputDims)
         )
 
-        self.modelStdDev = nn.Sequential(
-            nn.Linear(32, outputDims)
+        self.modelStdDev = torch.nn.Sequential(
+            torch.nn.Linear(32, outputDims)
         )
 
 
@@ -51,8 +51,7 @@ class ActorCritic(nn.Module):
             1 + torch.exp(self.modelStdDev(x))
         )
 
-        # Only return array, not tensor
-        return means[0], stdDevs[0]
+        return means, stdDevs
 
 
     # Update values based on the loss of the current policy
@@ -65,6 +64,9 @@ class ActorCritic(nn.Module):
 # Carries out the steps of the REINFORCE algorithm
 class REINFORCE:
     def __init__(self, inputDims, outputDims):
+        self.inputDims = inputDims
+        self.outputDims = outputDims
+
         # Hyperparameters set arbitrarily
         self.learningRate = 0.0001
         self.gamma = 0.99
@@ -81,16 +83,24 @@ class REINFORCE:
     #  and standard deviation of the estimated best action
     def chooseAction(self, state):
         means, stdDevs = self.network(state)
+        # print(means, stdDevs)
 
-        # Defines a distibution, samples from it, then finds the 
+        # Defines a distibution for each action, samples from it, then finds the 
         # probability of taking that action, for calculating loss
-        distribution = Normal(means, stdDevs)
-        action = distribution.sample()
-        probability = distribution.log_prob(action)
+        actions = []
+        distributions = []
+        # Probability of all actions being taken together
+        fullProbability = 0
+        
+        for i in range(self.outputDims):
+            distributions.append(torch.distributions.normal.Normal(means[i], stdDevs[i]))
+            actions.append(distributions[i].sample())
+            
+            fullProbability += distributions[i].log_prob(actions[i])
 
-        self.probabilities.append(probability)
+        self.probabilities.append(fullProbability / outputDims)
 
-        return action
+        return actions
 
         
     #Updates the network 
@@ -103,6 +113,8 @@ class REINFORCE:
         for reward in self.rewards[::-1]:
             gradient = reward + (self.gamma * gradient)
             gradients.insert(0, gradient)
+
+        # print(len(self.probabilities), len(gradients))
 
         # Calculates the loss of that trajectory
         for i in range(len(self.probabilities)):
@@ -117,15 +129,14 @@ class REINFORCE:
 
 
 # Create and wrap the environment
-env = gym.make("InvertedPendulum-v4")
-wrappedEnv = gym.wrappers.RecordEpisodeStatistics(env, 50)  # Records episode-reward
+env = gym.make("Hopper-v4")
+wrappedEnv = gym.wrappers.RecordEpisodeStatistics(env)  # Records episode-reward
 
-totalNumEpisodes = 5000  # Total number of episodes
+totalNumEpisodes = 1500  # Total number of episodes
 inputDims = env.observation_space.shape[0]
 outputDims = env.action_space.shape[0]
 totalRewards = []
 
-# Reinitialize agent every seed
 agent = REINFORCE(inputDims, outputDims)
 rewards = []
 
@@ -136,7 +147,7 @@ for episode in range(totalNumEpisodes):
     while terminated == False:
         action = agent.chooseAction(observation)
 
-        observation, reward, terminated, truncated, info = wrappedEnv.step([action])
+        observation, reward, terminated, truncated, info = wrappedEnv.step(action)
         agent.rewards.append(reward)
 
     rewards.append(wrappedEnv.return_queue[-1])
@@ -155,3 +166,20 @@ sns.lineplot(x="episodes", y="reward", data=df1).set(
     title="REINFORCE for InvertedPendulum-v4"
 )
 plt.show()
+
+# Create and wrap the environment
+env = gym.make("Hopper-v4", render_mode="human")
+wrappedEnv = gym.wrappers.RecordEpisodeStatistics(env)  # Records episode-reward
+
+while True:
+    observation, info = wrappedEnv.reset()
+
+    terminated = False
+    while terminated == False:
+        action = agent.chooseAction(observation)
+
+        observation, reward, terminated, truncated, info = wrappedEnv.step(action)
+        agent.rewards.append(reward)
+
+    rewards.append(wrappedEnv.return_queue[-1])
+    agent.updateNetwork()
