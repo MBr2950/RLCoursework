@@ -12,7 +12,9 @@ class ActorCritic(nn.Module):
     def __init__(self, inputDims, outputDims):
         super(ActorCritic, self).__init__()
         layers = [
-            nn.Linear(inputDims, 32),
+            nn.Linear(inputDims, 64),
+            nn.ReLU(),
+            nn.Linear(64, 32),
             nn.ReLU(),
             nn.Linear(32, 32),
             nn.ReLU(),
@@ -30,31 +32,42 @@ class ActorCritic(nn.Module):
             nn.Linear(32, outputDims)
         )
 
+
+        self.optimiser = torch.optim.Adam(self.model.parameters())
+
         # Avoids type issues
         self.double()
 
 
     # Performs forward pass to calculate loss
-    def forward(self, x):
-        # sharedFeatures contains the actual values at nodes
-        sharedFeatures = self.model(torch.tensor(x))
+    def forward(self, state):
+        # x contains the actual values at nodes
+        x = self.model(torch.tensor(state))
 
-        means = self.modelMean(sharedFeatures)
+        # Mean and standard deviation of predicted best action are
+        #  returned, to allow for sampling from normal distribution
+        means = self.modelMean(x)
         stdDevs = torch.log(
-            1 + torch.exp(self.modelStdDev(sharedFeatures))
+            1 + torch.exp(self.modelStdDev(x))
         )
 
-        return means, stdDevs
+        # Only return array, not tensor
+        return means[0], stdDevs[0]
 
+
+    # Update values based on the loss of the current policy
+    def update(self, loss):
+        self.optimiser.zero_grad()
+        loss.backward()
+        self.optimiser.step()
 
 
 # Carries out the steps of the REINFORCE algorithm
 class REINFORCE:
     def __init__(self, inputDims, outputDims):
         # Hyperparameters set arbitrarily
-        self.learningRate = 1e-4
+        self.learningRate = 0.0001
         self.gamma = 0.99
-        self.episodes = 1e-6
 
         # Probabilities stores the probability of taking a given action, 
         # rewards stores the reward of that action
@@ -62,7 +75,6 @@ class REINFORCE:
         self.rewards = []
 
         self.network = ActorCritic(inputDims, outputDims)
-        self.optimiser = torch.optim.Adam(self.network.parameters())
 
 
     # Samples an action from the distribution according to mean
@@ -72,98 +84,70 @@ class REINFORCE:
 
         # Defines a distibution, samples from it, then finds the 
         # probability of taking that action, for calculating loss
-        distribution = Normal(means[0] + self.episodes, stdDevs[0] + self.episodes)
+        distribution = Normal(means, stdDevs)
         action = distribution.sample()
         probability = distribution.log_prob(action)
-
-        action = action.numpy()
 
         self.probabilities.append(probability)
 
         return action
 
-
+        
     #Updates the network 
-    def update(self):
+    def updateNetwork(self):
         gradient = 0
         gradients = []
+        loss = 0
 
         # Follow the trajectory in reverse
         for reward in self.rewards[::-1]:
-            gradient = reward + self.gamma * gradient
+            gradient = reward + (self.gamma * gradient)
             gradients.insert(0, gradient)
 
-        gradients = torch.tensor(gradients)
-
         # Calculates the loss of that trajectory
-        loss = 0
         for i in range(len(self.probabilities)):
             loss += self.probabilities[i].mean() * gradients[i] * (-1)
 
-        # Update network
-        self.optimiser.zero_grad()
-        loss.backward()
-        self.optimiser.step()
+        # Update network based on this loss
+        self.network.update(loss)
 
         # Reset lists for next epsiode
         self.probabilities = []
         self.rewards = []
 
 
-
 # Create and wrap the environment
 env = gym.make("InvertedPendulum-v4")
 wrappedEnv = gym.wrappers.RecordEpisodeStatistics(env, 50)  # Records episode-reward
 
-totalNumEpisodes = int(5e3)  # Total number of episodes
-# Observation-space of InvertedPendulum-v4 (4)
+totalNumEpisodes = 5000  # Total number of episodes
 inputDims = env.observation_space.shape[0]
-# Action-space of InvertedPendulum-v4 (1)
 outputDims = env.action_space.shape[0]
 totalRewards = []
 
-for seed in [1, 2, 3, 5, 8]:  # Fibonacci seeds
-    # set seed
-    torch.manual_seed(seed)
-    random.seed(seed)
-    np.random.seed(seed)
+# Reinitialize agent every seed
+agent = REINFORCE(inputDims, outputDims)
+rewards = []
 
-    # Reinitialize agent every seed
-    agent = REINFORCE(inputDims, outputDims)
-    rewards = []
+for episode in range(totalNumEpisodes):
+    observation, info = wrappedEnv.reset()
 
-    for episode in range(totalNumEpisodes):
-        # gymnasium v26 requires users to set seed while resetting the environment
-        observation, info = wrappedEnv.reset(seed=seed)
+    terminated = False
+    while terminated == False:
+        action = agent.chooseAction(observation)
 
-        done = False
-        while not done:
-            action = agent.chooseAction(observation)
+        observation, reward, terminated, truncated, info = wrappedEnv.step([action])
+        agent.rewards.append(reward)
 
-            # Step return type - `tuple[ObsType, SupportsFloat, bool, bool, dict[str, Any]]`
-            # These represent the next observation, the reward from the step,
-            # if the episode is terminated, if the episode is truncated and
-            # additional info from the step
-            # print(action)
-            observation, reward, terminated, truncated, info = wrappedEnv.step([action])
-            agent.rewards.append(reward)
+    rewards.append(wrappedEnv.return_queue[-1])
+    agent.updateNetwork()
 
-            # End the episode when either truncated or terminated is true
-            #  - truncated: The episode duration reaches max number of timesteps
-            #  - terminated: Any of the state space values is no longer finite.
-            done = terminated or truncated
-
-        rewards.append(wrappedEnv.return_queue[-1])
-        agent.update()
-
-        if episode % 100 == 0:
-            avgReward = int(np.mean(wrappedEnv.return_queue))
-            print("Episode:", episode, "Average Reward:", avgReward)
-
-    totalRewards.append(rewards)
+    if episode % 100 == 0:
+        avgReward = int(np.mean(wrappedEnv.return_queue))
+        print("Episode:", episode, "Average Reward:", avgReward)
 
 
-rewards_to_plot = [[reward[0] for reward in rewards] for rewards in totalRewards]
+rewards_to_plot = [[reward[0] for reward in rewards]]
 df1 = pd.DataFrame(rewards_to_plot).melt()
 df1.rename(columns={"variable": "episodes", "value": "reward"}, inplace=True)
 sns.set(style="darkgrid", context="talk", palette="rainbow")
