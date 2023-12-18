@@ -1,9 +1,7 @@
-#  basic pseudocode (as guide, won't be efficient):
-#  https://moodle.bath.ac.uk/mod/page/view.php?id=1146237&forceview=1
-
 #  pseudocode:
-#  https://moodle.bath.ac.uk/mod/page/view.php?id=1146241
-print("1")    
+#  https://moodle.bath.ac.uk/mod/page/view.php?id=1146268
+
+  
 import gymnasium as gym
 import torch
 from torch import nn
@@ -49,7 +47,7 @@ class ActorNetwork(torch.nn.Module):
         E1 = torch.tensor(E, requires_grad=True)
         E1.backward()
         E1 = -E1
-        
+        #Where E and E1 represent Expected Value (E is working value, E1 has correct datatype)
         self.optimizer.step()
         
 
@@ -102,7 +100,8 @@ class CriticNetwork(torch.nn.Module):
     
 
 
-D = list()#todo: initialise this list by allowing agent to wander randomly for some time steps 
+D = list()#Replay memory- holds all transition information:
+          #Holds list of multiple: [0-State, 1-Action, 2-Reward, 3-Observation]
 
 observation, info = env.reset()
 for i in range(10):
@@ -111,7 +110,7 @@ for i in range(10):
     action = (action - 0.5) * 0.8 #scales properly
     observation, reward, terminated, truncuated, info = env.step(action)
     D.append([state, action, reward, observation])
-
+#allows agent to wander randomly for some time steps 
 
 
 pi1 = ActorNetwork()
@@ -138,9 +137,9 @@ for i in range(1000):
         #chooses action, notes new information
         action = pi1.ChooseAction(observation)
 
-
+        #adds randomisation to action for all 16 limbs,+/- 0.1 max, caps at -0.4 and 0.4
         for j in action:
-            j = j + np.random.normal(0, 0.1)#adds randomisation to action for all 16 limbs,+/- 0.1 max, caps at -0.4 and 0.4
+            j = j + np.random.normal(0, 0.1)
             if j > 0.4:
                 j = 0.4
             if j < -0.4:
@@ -152,23 +151,28 @@ for i in range(1000):
 
         #updates Action-Value estimate (NN)
         for j in range(minibatch):
-            transition = D[random.randint(0, len(D) - 1)]
             # Picks a random sample from D 
             #0-State, 1- Action, 2- Reward, 3- Observation
+            transition = D[random.randint(0, len(D) - 1)]
+
+            #train q1
             q1y = transition[2] + gamma * q2.ActionValue(transition[3], pi2.ChooseAction(transition[3]))
             q1.Update(q1y, q1.ActionValue(transition[0], transition[1]))
 
+            #train pi1
             pi1.Update(q1.ActionValue(transition[0], pi1.ChooseAction(transition[0])))
         
 
-        #update the beta thing instead of C here
+        #updates pi2 and q2 to get slightly closer to pi1 and q1
         pi2.Refresh(pi1)
         q2.Refresh(q1)
+
         #ends the episode
         if terminated or truncuated:
             observation, info = env.reset()
             break
     
+    #calculates sum of rewards for an episode
     totreward = 0
     for rew in rewardlist:
         totreward += rew
