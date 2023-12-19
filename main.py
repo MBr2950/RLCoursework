@@ -7,7 +7,9 @@ import torch
 from torch import nn
 import random
 import numpy as np
-import matplotlib
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 env = gym.make('Ant-v4', exclude_current_positions_from_observation=False)
 observation, info = env.reset()
 
@@ -125,6 +127,7 @@ Beta = 0.1 #Incremental refreshing rate
 minibatch = 5 #Taken from D
 gamma = 0.1 #learning rate
 dataprint = 0
+rewards_to_plot = list()
 
 
 #Main loop, i is number of episodes
@@ -149,6 +152,8 @@ for i in range(1000):
         state = observation
         observation, reward, terminated, truncuated, info = env.step(action)
         D.append([state, action, reward, observation])
+
+        rewardlist.append(reward)
 
         #updates Action-Value estimate (NN)
         for j in range(minibatch):
@@ -178,6 +183,7 @@ for i in range(1000):
     for rew in rewardlist:
         avgReward += rew
     avgReward = avgReward / len(rewardlist)
+    rewards_to_plot.append(avgReward)
 
     print("Episode: " + str(i) + ". Reward Avg = " + str(avgReward))
 
@@ -190,4 +196,3 @@ sns.lineplot(x="episodes", y="reward", data=df1).set(
     title="REINFORCE for InvertedPendulum-v4"
 )
 plt.show()
-
