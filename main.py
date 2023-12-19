@@ -7,6 +7,7 @@ import torch
 from torch import nn
 import random
 import numpy as np
+import matplotlib
 env = gym.make('Ant-v4', exclude_current_positions_from_observation=False)
 observation, info = env.reset()
 
@@ -172,24 +173,21 @@ for i in range(1000):
             observation, info = env.reset()
             break
     
-    #calculates sum of rewards for an episode
-    totreward = 0
+    #calculates avg of rewards for an episode
+    avgReward = 0
     for rew in rewardlist:
-        totreward += rew
-    print("Episode: " + str(i) + ". Reward Sum = " + str(totreward))
+        avgReward += rew
+    avgReward = avgReward / len(rewardlist)
+
+    print("Episode: " + str(i) + ". Reward Avg = " + str(avgReward))
 
 env.close()
 
-
-
-
-
-
-
-    
-       
-
-
-    
-     
+df1 = pd.DataFrame(rewards_to_plot).melt()
+df1.rename(columns={"variable": "episodes", "value": "reward"}, inplace=True)
+sns.set(style="darkgrid", context="talk", palette="rainbow")
+sns.lineplot(x="episodes", y="reward", data=df1).set(
+    title="REINFORCE for InvertedPendulum-v4"
+)
+plt.show()
 
