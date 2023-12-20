@@ -57,6 +57,7 @@ class ActorCritic(torch.nn.Module):
 
     # Update values based on the loss of the current policy
     def update(self, loss):
+        # print("\n", loss, "\n")
         self.optimiser.zero_grad()
         loss.backward()
         self.optimiser.step()

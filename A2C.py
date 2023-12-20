@@ -74,10 +74,10 @@ class ActorCritic(nn.Module):
 
 class A2C():
     def __init__(self, env):
-        inputDims = env.observation_space.shape[0]
-        outputDims = env.action_space.shape[0]
+        self.inputDims = env.observation_space.shape[0]
+        self.outputDims = env.action_space.shape[0]
 
-        self.actorCritic = ActorCritic(inputDims, outputDims)
+        self.actorCritic = ActorCritic(self.inputDims, self.outputDims)
         self.actorCriticOptimiser = optim.Adam(self.actorCritic.parameters(), lr=0.0003)
 
         self.allLengths = []
@@ -90,12 +90,22 @@ class A2C():
         self.maxEpisodes = 3000
 
     def chooseAction(self, means, stdDevs):
-            distribution = torch.distributions.Normal(means, stdDevs)
+            # Defines a distibution for each action, samples from it, then finds the 
+            # probability of taking that action, for calculating loss
+            actions = []
+            distributions = []
+            # Probability of all actions being taken together
+            fullProbability = 0
 
-            action = distribution.sample()
-            probability = distribution.log_prob(action)
+            for i in range(self.outputDims):
+                distributions.append(torch.distributions.Normal(means[i], stdDevs[i]))
+                actions.append(distributions[i].sample())
+                fullProbability += distributions[i].log_prob(actions[i])
+            fullProbability = fullProbability / self.outputDims
 
-            return action, probability
+            # print(actions)
+
+            return actions, fullProbability
 
 
     def updateNetwork(self, criticValues, QValues, probabilities):
@@ -106,8 +116,12 @@ class A2C():
             
         advantage = QValues - criticValues
         actorLoss = (-probabilities * advantage).mean()
-        criticLoss = 0.5 * advantage.pow(2).mean()
-        actorCriticLoss = actorLoss + criticLoss + 0.001 * self.entropyTerm
+        criticLoss = (0.5 * advantage.pow(2)).mean()
+
+        # print("\n actorLoss: ", actorLoss, "\n criticLoss: ", criticLoss, "\n entropyTerm: ", self.entropyTerm)
+        # print("\n criticValues: ", criticValues, "\n QValues: ", QValues)
+
+        actorCriticLoss = actorLoss + criticLoss #+ 0.001 * self.entropyTerm
 
         self.actorCriticOptimiser.zero_grad()
         actorCriticLoss.backward()
@@ -176,9 +190,9 @@ class A2C():
 
 
 if __name__ == "__main__":
-    env = gym.make("InvertedPendulum-v4")
+    env = gym.make("Hopper-v4")
     a2c = A2C(env)
     a2c.main(env)
 
-    env = gym.make("InvertedPendulum-v4", render_mode = "human")
+    env = gym.make("Hopper-v4", render_mode = "human")
     a2c.main(env)
