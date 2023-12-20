@@ -2,15 +2,16 @@
 
 import gymnasium as gym
 import numpy as np
-import torch
-import pandas as pd
-import seaborn as sns
+import torch, pandas, seaborn
 import matplotlib.pyplot as plt
 
 # Neural network for function approximation
 class ActorCritic(torch.nn.Module):
     def __init__(self, inputDims, outputDims):
         super(ActorCritic, self).__init__()
+        # Hyperparameters set arbitrarily
+        self.learningRate = 0.0003
+
         layers = [
             torch.nn.Linear(inputDims, 64),
             torch.nn.ReLU(),
@@ -33,7 +34,7 @@ class ActorCritic(torch.nn.Module):
         )
 
 
-        self.optimiser = torch.optim.Adam(self.model.parameters())
+        self.optimiser = torch.optim.Adam(self.model.parameters(), lr=self.learningRate)
 
         # Avoids type issues
         self.double()
@@ -68,7 +69,7 @@ class REINFORCE:
         self.outputDims = outputDims
 
         # Hyperparameters set arbitrarily
-        self.learningRate = 0.0001
+        self.learningRate = 0.0003
         self.gamma = 0.99
 
         # Probabilities stores the probability of taking a given action, 
@@ -129,10 +130,10 @@ class REINFORCE:
 
 
 # Create and wrap the environment
-env = gym.make("Hopper-v4")
+env = gym.make("InvertedPendulum-v4")
 wrappedEnv = gym.wrappers.RecordEpisodeStatistics(env)  # Records episode-reward
 
-totalNumEpisodes = 1500  # Total number of episodes
+totalNumEpisodes = 10000  # Total number of episodes
 inputDims = env.observation_space.shape[0]
 outputDims = env.action_space.shape[0]
 totalRewards = []
@@ -159,16 +160,16 @@ for episode in range(totalNumEpisodes):
 
 
 rewards_to_plot = [[reward[0] for reward in rewards]]
-df1 = pd.DataFrame(rewards_to_plot).melt()
+df1 = pandas.DataFrame(rewards_to_plot).melt()
 df1.rename(columns={"variable": "episodes", "value": "reward"}, inplace=True)
-sns.set(style="darkgrid", context="talk", palette="rainbow")
-sns.lineplot(x="episodes", y="reward", data=df1).set(
-    title="REINFORCE for InvertedPendulum-v4"
+seaborn.set(style="darkgrid", context="talk", palette="rainbow")
+seaborn.lineplot(x="episodes", y="reward", data=df1).set(
+    title="REINFORCE for Hopper-v4"
 )
 plt.show()
 
 # Create and wrap the environment
-env = gym.make("Hopper-v4", render_mode="human")
+env = gym.make("InvertedPendulum-v4", render_mode="human")
 wrappedEnv = gym.wrappers.RecordEpisodeStatistics(env)  # Records episode-reward
 
 while True:
