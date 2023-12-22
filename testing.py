@@ -106,7 +106,6 @@ average_episode_rewards = []  # To store the average reward per episode
 for episode in range(num_episodes):
     observation, info = env.reset()
     total_reward = 0
-    num_steps = 0  # Variable to count the number of steps in the episode
 
     while True:
         # Choose an action using the loaded actor network
@@ -115,14 +114,13 @@ for episode in range(num_episodes):
         # Perform the action in the environment
         observation, reward, terminated, truncated, info = env.step(action)
         total_reward += reward
-        num_steps += 1  # Increment step count
 
         # Check for the end of the episode
         if terminated or truncated:
             break
 
     # Calculate and record the average reward for this episode
-    average_reward = total_reward / num_steps if num_steps > 0 else 0
+    average_reward = total_reward
     average_episode_rewards.append(average_reward)
 
 # Close the environment
@@ -131,5 +129,5 @@ env.close()
 # Plotting results
 df = pd.DataFrame({'Episode': range(1, num_episodes + 1), 'Average Reward': average_episode_rewards})
 sns.set(style="darkgrid", context="talk", palette="rainbow")
-sns.lineplot(x='Episode', y='Average Reward', data=df).set(title="Evaluation of REINFORCE on Ant-v4 - Average Reward per Episode")
+sns.lineplot(x='Episode', y='Average Reward', data=df).set(title="Evaluation of REINFORCE on Ant-v4 - Average Rewards per Episode")
 plt.show()

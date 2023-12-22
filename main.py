@@ -11,7 +11,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from collections import deque
 
-env = gym.make('Ant-v4', healthy_z_range = (0.2, 1.0), exclude_current_positions_from_observation=False)
+env = gym.make('Ant-v4', healthy_z_range = (0.5, 1.0), exclude_current_positions_from_observation=False)
 observation, info = env.reset()
 
 ## Defining the Actor class
@@ -115,15 +115,15 @@ q1 = CriticNetwork()
 q2 = CriticNetwork()
 
 beta = 0.01 # Incremental refreshing rate
-minibatch = 32 # Taken from D
+minibatch = 5 # Taken from D
 gamma = 0.9 # Discounting on future rewards
 dataprint = 0
+rewardlist = list()
 rewards_to_plot = list()
 
 # Main loop iterating over each episode
-for i in range(1000):
+for i in range(10000):
     observation, info = env.reset()
-    rewardlist = list()
 
     while (True):
         # Chooses action, notes new information
@@ -162,14 +162,15 @@ for i in range(1000):
             observation, info = env.reset()
             break
     
-    # Calculates avg of rewards for an episode
-    avgReward = 0
-    for rew in rewardlist:
-        avgReward += rew
-    avgReward = avgReward / len(rewardlist)
-    rewards_to_plot.append(avgReward)
-
-    print("Episode: " + str(i) + ". Reward Avg = " + str(avgReward))
+    # Calculates avg of rewards for last 100 episodes
+    if i == 0:
+        avgReward = sum(rewardlist)
+        print("Episode: " + str(i) + ". Reward Avg = " + str(avgReward))
+    elif i % 100 == 0:
+        avgReward = sum(rewardlist) / 100
+        rewards_to_plot.append(avgReward)
+        rewardlist = list()
+        print("Episode: " + str(i) + ". Reward Avg = " + str(avgReward))
 
 # Save the trained models
 torch.save(pi1.state_dict(), 'actor_model.pth') # Save Actor Model
@@ -182,6 +183,6 @@ df1 = pd.DataFrame(rewards_to_plot).melt()
 df1.rename(columns={"variable": "episodes", "value": "reward"}, inplace=True)
 sns.set(style="darkgrid", context="talk", palette="rainbow")
 sns.lineplot(x="episodes", y="reward", data=df1).set(
-    title="Training REINFORCE for Ant-v4 - Average Reward per Episode"
+    title="Training REINFORCE for Ant-v4 - Average Rewards per Episode"
 )
 plt.show()
