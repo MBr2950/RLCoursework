@@ -11,7 +11,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from collections import deque
 
-env = gym.make('Ant-v4', healthy_z_range = (0.5, 1), exclude_current_positions_from_observation=False)
+env = gym.make('Ant-v4', healthy_z_range = (0.2, 1.0), exclude_current_positions_from_observation=False)
 observation, info = env.reset()
 
 ## Defining the Actor class
@@ -21,13 +21,14 @@ class ActorNetwork(torch.nn.Module):
         super(ActorNetwork, self).__init__()
 
         self.NN = nn.Sequential(
-            nn.Linear(29, 100),
+            nn.Linear(29, 256),
             nn.ReLU(),
-            nn.Linear(100, 100),
+            nn.Linear(256, 256),
             nn.ReLU(),
-            nn.Linear(100, 32),
+            nn.Linear(256, 128),
             nn.ReLU(),
-            nn.Linear(32, 8))
+            nn.Linear(128, 8)
+        )
         
         self.optimizer = torch.optim.SGD(self.parameters(), lr=0.01, momentum=0.5)
 
@@ -68,17 +69,14 @@ class CriticNetwork(torch.nn.Module):
         super(CriticNetwork, self).__init__()
 
         self.NN = nn.Sequential(
-            nn.Linear(37, 120),
+            nn.Linear(37, 256),
             nn.ReLU(),
-            nn.Linear(120, 60),
+            nn.Linear(256, 256),
             nn.ReLU(),
-            nn.Linear(60, 45),
+            nn.Linear(256, 128),
             nn.ReLU(),
-            nn.Linear(45, 30),
-            nn.ReLU(),
-            nn.Linear(30, 10),
-            nn.ReLU(),
-            nn.Linear(10, 1))
+            nn.Linear(128, 1)
+        )
         
         self.optimizer = torch.optim.SGD(self.parameters(), lr=0.01, momentum=0.5)
     
@@ -118,7 +116,7 @@ q2 = CriticNetwork()
 
 beta = 0.01 # Incremental refreshing rate
 minibatch = 32 # Taken from D
-gamma = 0.9 # Discounting 
+gamma = 0.9 # Discounting on future rewards
 dataprint = 0
 rewards_to_plot = list()
 
@@ -131,13 +129,11 @@ for i in range(1000):
         # Chooses action, notes new information
         action = pi1.ChooseAction(observation)
 
-        # Adds randomisation to action for all 8 limbs,+/- 0.1 max, caps at -1.0 and 1.0
-        for j in action:
-            j = j + np.random.normal(0, 0.1)
-            if j > 1.0:
-                j = 1.0
-            if j < -1.0:
-                j = -1.0
+        # Adding randomization to the action for all 8 limbs,+/- 0.1 max
+        action += np.random.normal(0, 0.1, size=action.shape)
+
+        # Clipping the actions to be within the range [-1.0, 1.0]
+        action = np.clip(action, -1.0, 1.0)
 
         state = observation
         observation, reward, terminated, truncuated, info = env.step(action)
