@@ -9,6 +9,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from collections import deque
+
 env = gym.make('Ant-v4', healthy_z_range = (0.5, 1), exclude_current_positions_from_observation=False)
 observation, info = env.reset()
 
@@ -96,16 +98,16 @@ class CriticNetwork(torch.nn.Module):
         for param1, param2 in zip(self.parameters(), q.parameters()):
             param1 = beta * param1.data + (1-beta) * param2.data
 
-# Replay memory- holds all transition information:
-# Holds list of multiple: [0-State, 1-Action, 2-Reward, 3-Observation]
-D = list()
+# Replay memory- holds all transition information (limited at maxlength):
+# Holds queue of multiple: [0-State, 1-Action, 2-Reward, 3-Observation]
+D = deque(maxlen=100000)
 
 # Allows agent to wander randomly for some time steps
 observation, info = env.reset()
-for i in range(10):
+for i in range(100):
     state = observation
     action = np.random.random_sample(size = 8)
-    action = (action - 0.5) * 0.8 # Scales properly
+    action = (action - 0.5) * 2 # Scales properly (1.0, 1.0)
     observation, reward, terminated, truncuated, info = env.step(action)
     D.append([state, action, reward, observation])
 
@@ -114,9 +116,9 @@ pi2 = ActorNetwork()
 q1 = CriticNetwork()
 q2 = CriticNetwork()
 
-beta = 0.1 # Incremental refreshing rate
-minibatch = 5 # Taken from D
-gamma = 0.1 # Discounting 
+beta = 0.01 # Incremental refreshing rate
+minibatch = 32 # Taken from D
+gamma = 0.9 # Discounting 
 dataprint = 0
 rewards_to_plot = list()
 
