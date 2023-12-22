@@ -1,6 +1,5 @@
 #  pseudocode:
 #  https://moodle.bath.ac.uk/mod/page/view.php?id=1146268
-
   
 import gymnasium as gym
 import torch
@@ -13,14 +12,12 @@ import matplotlib.pyplot as plt
 env = gym.make('Ant-v4', exclude_current_positions_from_observation=False)
 observation, info = env.reset()
 
-## The Neural Networks
+## Defining the Actor class
 class ActorNetwork(torch.nn.Module):
-
-
     def __init__(self):
-        #initialises the network
-        #we need to decide what our network will look like
+        """Initialises the Actor network."""
         super(ActorNetwork, self).__init__()
+
         self.NN = nn.Sequential(
             nn.Linear(29, 100),
             nn.ReLU(),
@@ -32,16 +29,15 @@ class ActorNetwork(torch.nn.Module):
         
         self.optimizer = torch.optim.SGD(self.parameters(), lr=0.01, momentum=0.5)
 
-
     def ChooseAction(self, State):
-        #uses the NN to estimate an action for a given state
+        """Uses the NN to estimate an action for a given state."""
+        # Converts from np to tensor, then back
         State = torch.from_numpy(State).float()
-        return (self.NN(State)).detach().numpy()# converts from np to tensor, then back
-    
-        #TODO: Add randomisation
+        return (self.NN(State)).detach().numpy()
     
     def Update(self, values):
-        #trains the network
+        """Trains the network."""
+        # Where E and E1 represent Expected Value (E is working value, E1 has correct datatype)
         values = values.detach().numpy()
         self.optimizer.zero_grad()
         E = 0
@@ -50,26 +46,25 @@ class ActorNetwork(torch.nn.Module):
         E1 = torch.tensor(E, requires_grad=True)
         E1.backward()
         E1 = -E1
-        #Where E and E1 represent Expected Value (E is working value, E1 has correct datatype)
         self.optimizer.step()
         
 
     def Refresh(self, pi):
         #Updates pi2 to match pi1
         for param1, param2 in zip(self.parameters(), pi.parameters()):
-            param1 = Beta * param1.data + (1-Beta) * param2.data
+            param1 = beta * param1.data + (1-beta) * param2.data
 
        #Inspired by:
        #https://github.com/DLR-RM/stable-baselines3/issues/93
        #May need to cite
 
          
-
+## Defining the Critic class
 class CriticNetwork(torch.nn.Module):
-
     def __init__(self):
-        #initialises the network
+        """Initialises the Critic network."""
         super(CriticNetwork, self).__init__()
+
         self.NN = nn.Sequential(
             nn.Linear(37, 120),
             nn.ReLU(),
@@ -86,62 +81,55 @@ class CriticNetwork(torch.nn.Module):
         self.optimizer = torch.optim.SGD(self.parameters(), lr=0.01, momentum=0.5)
     
     def ActionValue(self, State, Action):
-        #uses the NN to estimate the action-value for a given state and action
+        """Uses the NN to estimate the action-value for a given state and action."""
         return self.NN(torch.from_numpy(np.concatenate((State, Action))).float())
     
     def Update(self, y1, y2):
-        #trains the network
+        """Trains the network."""
         self.optimizer.zero_grad()
         loss = nn.functional.huber_loss(y1, y2)
         loss.backward()
         self.optimizer.step()
         
     def Refresh(self, q):
-            #Updates q2 to match q1
-            for param1, param2 in zip(self.parameters(), q.parameters()):
-                param1 = Beta * param1.data + (1-Beta) * param2.data
+        """Updates q2 to match q1."""
+        for param1, param2 in zip(self.parameters(), q.parameters()):
+            param1 = beta * param1.data + (1-beta) * param2.data
     
-
-
-D = list()#Replay memory- holds all transition information:
-          #Holds list of multiple: [0-State, 1-Action, 2-Reward, 3-Observation]
+# Replay memory- holds all transition information:
+# Holds list of multiple: [0-State, 1-Action, 2-Reward, 3-Observation]
+D = list()
 
 observation, info = env.reset()
 for i in range(10):
     state = observation
     action = np.random.random_sample(size = 8)
-    action = (action - 0.5) * 0.8 #scales properly
+    action = (action - 0.5) * 0.8 # Scales properly
     observation, reward, terminated, truncuated, info = env.step(action)
     D.append([state, action, reward, observation])
-#allows agent to wander randomly for some time steps 
-
+# Allows agent to wander randomly for some time steps 
 
 pi1 = ActorNetwork()
 pi2 = ActorNetwork()
 q1 = CriticNetwork()
 q2 = CriticNetwork()
 
-
-
-Beta = 0.1 #Incremental refreshing rate
-minibatch = 5 #Taken from D
-gamma = 0.1 #learning rate
+beta = 0.1 # Incremental refreshing rate
+minibatch = 5 # Taken from D
+gamma = 0.1 # Discounting 
 dataprint = 0
 rewards_to_plot = list()
 
-
-#Main loop, i is number of episodes
+# Main loop iterating over each episode
 for i in range(1000):
     observation, info = env.reset()
-    #an episode
     rewardlist = list()
 
     while (True):
-        
-        #chooses action, notes new information
+        # Chooses action, notes new information
         action = pi1.ChooseAction(observation)
 
-        #adds randomisation to action for all 16 limbs,+/- 0.1 max, caps at -0.4 and 0.4
+        # Adds randomisation to action for all 16 limbs,+/- 0.1 max, caps at -0.4 and 0.4
         for j in action:
             j = j + np.random.normal(0, 0.1)
             if j > 0.4:
@@ -152,33 +140,31 @@ for i in range(1000):
         state = observation
         observation, reward, terminated, truncuated, info = env.step(action)
         D.append([state, action, reward, observation])
-
         rewardlist.append(reward)
 
-        #updates Action-Value estimate (NN)
+        # Updates Action-Value estimate (NN)
         for j in range(minibatch):
             # Picks a random sample from D 
-            #0-State, 1- Action, 2- Reward, 3- Observation
+            # 0-State, 1- Action, 2- Reward, 3- Observation
             transition = D[random.randint(0, len(D) - 1)]
 
-            #train q1
+            # Train q1
             q1y = transition[2] + gamma * q2.ActionValue(transition[3], pi2.ChooseAction(transition[3]))
             q1.Update(q1y, q1.ActionValue(transition[0], transition[1]))
 
-            #train pi1
+            # Train pi1
             pi1.Update(q1.ActionValue(transition[0], pi1.ChooseAction(transition[0])))
         
-
-        #updates pi2 and q2 to get slightly closer to pi1 and q1
+        # Updates pi2 and q2 to get slightly closer to pi1 and q1
         pi2.Refresh(pi1)
         q2.Refresh(q1)
 
-        #ends the episode
+        # Ends the episode
         if terminated or truncuated:
             observation, info = env.reset()
             break
     
-    #calculates avg of rewards for an episode
+    # Calculates avg of rewards for an episode
     avgReward = 0
     for rew in rewardlist:
         avgReward += rew
@@ -189,6 +175,7 @@ for i in range(1000):
 
 env.close()
 
+# Plotting results
 df1 = pd.DataFrame(rewards_to_plot).melt()
 df1.rename(columns={"variable": "episodes", "value": "reward"}, inplace=True)
 sns.set(style="darkgrid", context="talk", palette="rainbow")
