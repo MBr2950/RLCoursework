@@ -129,13 +129,13 @@ for i in range(1000):
         # Chooses action, notes new information
         action = pi1.ChooseAction(observation)
 
-        # Adds randomisation to action for all 16 limbs,+/- 0.1 max, caps at -0.4 and 0.4
+        # Adds randomisation to action for all 16 limbs,+/- 0.1 max, caps at -1.0 and 1.0
         for j in action:
             j = j + np.random.normal(0, 0.1)
-            if j > 0.4:
-                j = 0.4
-            if j < -0.4:
-                j = -0.4
+            if j > 1.0:
+                j = 1.0
+            if j < -1.0:
+                j = -1.0
 
         state = observation
         observation, reward, terminated, truncuated, info = env.step(action)
@@ -180,6 +180,6 @@ df1 = pd.DataFrame(rewards_to_plot).melt()
 df1.rename(columns={"variable": "episodes", "value": "reward"}, inplace=True)
 sns.set(style="darkgrid", context="talk", palette="rainbow")
 sns.lineplot(x="episodes", y="reward", data=df1).set(
-    title="REINFORCE for InvertedPendulum-v4"
+    title="REINFORCE for Ant-v4"
 )
 plt.show()
