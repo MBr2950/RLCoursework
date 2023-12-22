@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-env = gym.make('Ant-v4', exclude_current_positions_from_observation=False)
+env = gym.make('Ant-v4', healthy_z_range = (0.5, 1), exclude_current_positions_from_observation=False)
 observation, info = env.reset()
 
 ## Defining the Actor class
@@ -95,11 +95,12 @@ class CriticNetwork(torch.nn.Module):
         """Updates q2 to match q1."""
         for param1, param2 in zip(self.parameters(), q.parameters()):
             param1 = beta * param1.data + (1-beta) * param2.data
-    
+
 # Replay memory- holds all transition information:
 # Holds list of multiple: [0-State, 1-Action, 2-Reward, 3-Observation]
 D = list()
 
+# Allows agent to wander randomly for some time steps
 observation, info = env.reset()
 for i in range(10):
     state = observation
@@ -107,7 +108,6 @@ for i in range(10):
     action = (action - 0.5) * 0.8 # Scales properly
     observation, reward, terminated, truncuated, info = env.step(action)
     D.append([state, action, reward, observation])
-# Allows agent to wander randomly for some time steps 
 
 pi1 = ActorNetwork()
 pi2 = ActorNetwork()
@@ -129,7 +129,7 @@ for i in range(1000):
         # Chooses action, notes new information
         action = pi1.ChooseAction(observation)
 
-        # Adds randomisation to action for all 16 limbs,+/- 0.1 max, caps at -1.0 and 1.0
+        # Adds randomisation to action for all 8 limbs,+/- 0.1 max, caps at -1.0 and 1.0
         for j in action:
             j = j + np.random.normal(0, 0.1)
             if j > 1.0:
@@ -173,6 +173,10 @@ for i in range(1000):
 
     print("Episode: " + str(i) + ". Reward Avg = " + str(avgReward))
 
+# Save the trained models
+torch.save(pi1.state_dict(), 'actor_model.pth') # Save Actor Model
+torch.save(q1.state_dict(), 'critic_model.pth') # Save Critic Model
+
 env.close()
 
 # Plotting results
@@ -180,6 +184,6 @@ df1 = pd.DataFrame(rewards_to_plot).melt()
 df1.rename(columns={"variable": "episodes", "value": "reward"}, inplace=True)
 sns.set(style="darkgrid", context="talk", palette="rainbow")
 sns.lineplot(x="episodes", y="reward", data=df1).set(
-    title="REINFORCE for Ant-v4"
+    title="Training REINFORCE for Ant-v4 - Average Reward per Episode"
 )
 plt.show()
