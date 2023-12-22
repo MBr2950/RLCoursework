@@ -1,3 +1,5 @@
+# Based off https://towardsdatascience.com/understanding-actor-critic-methods-931b97b6df3f
+
 import torch
 import gymnasium as gym
 import numpy as np  
@@ -80,10 +82,10 @@ class A2C():
         self.gamma = 0.99
         # For calculating GAE
         # self.lambdaValue = 0.95
-        self.maxNumSteps = 1000
+        self.maxNumSteps = 25000
         # This is n step A2C
         self.nSteps = 20
-        self.maxEpisodes = 3000
+        self.maxEpisodes = 100000
 
     def chooseAction(self, means, stdDevs):
             # Defines a distibution for each action, samples from it, then finds the 
@@ -156,7 +158,9 @@ class A2C():
             terminateds = []
 
             state, info = env.reset()
-            for steps in range(self.maxNumSteps):
+            terminated = False
+            truncated = False
+            while terminated == False and truncated == False:
                 means, stdDevs, Qvalue = self.actorCritic.forward(state)
                 Qvalue = Qvalue.detach().numpy()
                 action, probability, entropy = self.chooseAction(means, stdDevs)
@@ -169,14 +173,16 @@ class A2C():
                 terminateds.append(terminated)
                 state = newState
                 
-                if terminated or steps == self.maxNumSteps - 1:
+                if terminated == True or truncated == True:
                     means, stdDevs, QValue = self.actorCritic.forward(newState)
                     QValue = QValue.detach().numpy()
                     self.allRewards.append(np.sum(rewards))
                     self.averageRewards.append(np.mean(self.allRewards[-10:]))
                     if episode % 100 == 0:                    
                         print("episode: {}, reward: {}, average reward: {}".format(episode, np.sum(rewards), self.averageRewards[-1]))
-                    
+                    # Plot graph every 1000 episodes, plotting will stop training, disable if you want to leave it to run
+                    if episode % 1000 == 0 and episode != 0:
+                        self.plot()
                     # self.updateNetwork(QValues, rewards, probabilities)
                     break
                 
@@ -187,6 +193,8 @@ class A2C():
         self.plot()
 
 
+    # Tried to implement a generalised advantage estimate (GAE) version of the advantage, but empirically
+    # this seemed to produce worse results, so TD advantage is used instead
     # def calculateGAE(self, rewards, QValues, terminateds):
     #     T = len(rewards) - 1
     #     gaes = [0] * T
@@ -211,9 +219,9 @@ class A2C():
 
 
 if __name__ == "__main__":
-    env = gym.make("InvertedPendulum-v4")
+    env = gym.make("Ant-v4", healthy_z_range = (0.5, 1))
     a2c = A2C(env)
     a2c.main(env)
 
-    env = gym.make("InvertedPendulum-v4", render_mode = "human")
+    env = gym.make("InvertedPendulum-v4", healthy_z_range = (0.5, 1), render_mode = "human")
     a2c.main(env)

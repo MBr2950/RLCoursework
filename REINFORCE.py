@@ -3,7 +3,7 @@
 import gymnasium as gym
 import numpy as np
 import torch, pandas, seaborn
-import matplotlib.pyplot as plt
+import matplotlib.pyplot
 
 # Neural network for function approximation
 class ActorCritic(torch.nn.Module):
@@ -73,10 +73,12 @@ class REINFORCE:
         self.learningRate = 0.0003
         self.gamma = 0.99
 
-        # Probabilities stores the probability of taking a given action, 
+        # probabilities stores the probability of taking a given action, 
         # rewards stores the reward of that action
+        # fullRewards stores the total reward of an episode
         self.probabilities = []
         self.rewards = []
+        self.fullRewards = []
 
         self.network = ActorCritic(inputDims, outputDims)
 
@@ -126,62 +128,67 @@ class REINFORCE:
         self.network.update(loss)
 
         # Reset lists for next epsiode
+        self.fullRewards.append(np.array(self.rewards).sum())
         self.probabilities = []
         self.rewards = []
 
 
 # Create and wrap the environment
-env = gym.make("InvertedPendulum-v4")
-wrappedEnv = gym.wrappers.RecordEpisodeStatistics(env)  # Records episode-reward
+env = gym.make("Ant-v4", healthy_z_range = (0.5, 1))
+# wrappedEnv = gym.wrappers.RecordEpisodeStatistics(env)  # Records episode-reward
 
-totalNumEpisodes = 10000  # Total number of episodes
+totalNumEpisodes = 100000  # Total number of episodes
 inputDims = env.observation_space.shape[0]
 outputDims = env.action_space.shape[0]
 totalRewards = []
 
 agent = REINFORCE(inputDims, outputDims)
-rewards = []
 
 for episode in range(totalNumEpisodes):
-    observation, info = wrappedEnv.reset()
+    # observation, info = wrappedEnv.reset()
+    observation, info = env.reset()
 
     terminated = False
     while terminated == False:
         action = agent.chooseAction(observation)
 
-        observation, reward, terminated, truncated, info = wrappedEnv.step(action)
+        observation, reward, terminated, truncated, info = env.step(action)
         agent.rewards.append(reward)
+        # print(agent.rewards)
 
-    rewards.append(wrappedEnv.return_queue[-1])
     agent.updateNetwork()
-
     if episode % 100 == 0:
-        avgReward = int(np.mean(wrappedEnv.return_queue))
+        try:
+            avgReward = np.mean(agent.fullRewards[episode - 100:])
+        except:
+            avgReward = 0
         print("Episode:", episode, "Average Reward:", avgReward)
+    # Plot graph every 1000 episodes, plotting will stop training, disable if you want to leave it to run
+    if episode % 1000 == 0 and episode != 0:
+        plot(agent)
 
-
-rewards_to_plot = [[reward[0] for reward in rewards]]
-df1 = pandas.DataFrame(rewards_to_plot).melt()
-df1.rename(columns={"variable": "episodes", "value": "reward"}, inplace=True)
-seaborn.set(style="darkgrid", context="talk", palette="rainbow")
-seaborn.lineplot(x="episodes", y="reward", data=df1).set(
-    title="REINFORCE for Hopper-v4"
-)
-plt.show()
+def plot(agent):
+    smoothedRewards = pandas.Series.rolling(pandas.Series(agent.fullRewards), 10).mean()
+    smoothedRewards = [element for element in smoothedRewards]
+    matplotlib.pyplot.plot(agent.fullRewards)
+    matplotlib.pyplot.plot(smoothedRewards)
+    matplotlib.pyplot.plot()
+    matplotlib.pyplot.xlabel('Episode')
+    matplotlib.pyplot.ylabel('Reward')
+    matplotlib.pyplot.show()
 
 # Create and wrap the environment
-env = gym.make("InvertedPendulum-v4", render_mode="human")
-wrappedEnv = gym.wrappers.RecordEpisodeStatistics(env)  # Records episode-reward
+env = gym.make("Ant-v4", healthy_z_range = (0.5, 1), render_mode = "human")
+# wrappedEnv = gym.wrappers.RecordEpisodeStatistics(env)  # Records episode-reward
 
 while True:
-    observation, info = wrappedEnv.reset()
+    observation, info = env.reset()
 
     terminated = False
     while terminated == False:
         action = agent.chooseAction(observation)
 
-        observation, reward, terminated, truncated, info = wrappedEnv.step(action)
+        observation, reward, terminated, truncated, info = env.step(action)
         agent.rewards.append(reward)
 
-    rewards.append(wrappedEnv.return_queue[-1])
     agent.updateNetwork()
