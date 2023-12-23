@@ -1,4 +1,5 @@
-# Based off https://gymnasium.farama.org/tutorials/training_agents/reinforce_invpend_gym_v26/#sphx-glr-tutorials-training-agents-reinforce-invpend-gym-v26-py
+# Code is largely based off
+# https://gymnasium.farama.org/tutorials/training_agents/reinforce_invpend_gym_v26/#sphx-glr-tutorials-training-agents-reinforce-invpend-gym-v26-py
 
 import gymnasium as gym
 import numpy as np
@@ -40,7 +41,6 @@ class ActorCritic(torch.nn.Module):
         self.double()
 
 
-    # Performs forward pass to calculate loss
     def forward(self, state):
         # x contains the actual values at nodes
         x = self.model(torch.tensor(state))
@@ -55,9 +55,8 @@ class ActorCritic(torch.nn.Module):
         return means, stdDevs
 
 
-    # Update values based on the loss of the current policy
+    # Update parameters based on the loss of the current policy
     def update(self, loss):
-        # print("\n", loss, "\n")
         self.optimiser.zero_grad()
         loss.backward()
         self.optimiser.step()
@@ -66,7 +65,9 @@ class ActorCritic(torch.nn.Module):
 # Carries out the steps of the REINFORCE algorithm
 class REINFORCE:
     def __init__(self, inputDims, outputDims):
+        # Number of observations
         self.inputDims = inputDims
+        # Number of actions
         self.outputDims = outputDims
 
         # Hyperparameters set arbitrarily
@@ -80,14 +81,14 @@ class REINFORCE:
         self.rewards = []
         self.fullRewards = []
 
+        # Instance of neural network
         self.network = ActorCritic(inputDims, outputDims)
 
 
     # Samples an action from the distribution according to mean
-    #  and standard deviation of the estimated best action
+    #  and standard deviation of the predicted best action
     def chooseAction(self, state):
         means, stdDevs = self.network(state)
-        # print(means, stdDevs)
 
         # Defines a distibution for each action, samples from it, then finds the 
         # probability of taking that action, for calculating loss
@@ -118,8 +119,6 @@ class REINFORCE:
             gradient = reward + (self.gamma * gradient)
             gradients.insert(0, gradient)
 
-        # print(len(self.probabilities), len(gradients))
-
         # Calculates the loss of that trajectory
         for i in range(len(self.probabilities)):
             loss += self.probabilities[i].mean() * gradients[i] * (-1)
@@ -133,40 +132,7 @@ class REINFORCE:
         self.rewards = []
 
 
-# Create and wrap the environment
-env = gym.make("Ant-v4", healthy_z_range = (0.5, 1))
-# wrappedEnv = gym.wrappers.RecordEpisodeStatistics(env)  # Records episode-reward
-
-totalNumEpisodes = 100000  # Total number of episodes
-inputDims = env.observation_space.shape[0]
-outputDims = env.action_space.shape[0]
-totalRewards = []
-
-agent = REINFORCE(inputDims, outputDims)
-
-for episode in range(totalNumEpisodes):
-    # observation, info = wrappedEnv.reset()
-    observation, info = env.reset()
-
-    terminated = False
-    while terminated == False:
-        action = agent.chooseAction(observation)
-
-        observation, reward, terminated, truncated, info = env.step(action)
-        agent.rewards.append(reward)
-        # print(agent.rewards)
-
-    agent.updateNetwork()
-    if episode % 100 == 0:
-        try:
-            avgReward = np.mean(agent.fullRewards[episode - 100:])
-        except:
-            avgReward = 0
-        print("Episode:", episode, "Average Reward:", avgReward)
-    # Plot graph every 1000 episodes, plotting will stop training, disable if you want to leave it to run
-    if episode % 1000 == 0 and episode != 0:
-        plot(agent)
-
+# Creates a graph showing average rewards over time
 def plot(agent):
     smoothedRewards = pandas.Series.rolling(pandas.Series(agent.fullRewards), 10).mean()
     smoothedRewards = [element for element in smoothedRewards]
@@ -177,18 +143,58 @@ def plot(agent):
     matplotlib.pyplot.ylabel('Reward')
     matplotlib.pyplot.show()
 
-# Create and wrap the environment
-env = gym.make("Ant-v4", healthy_z_range = (0.5, 1), render_mode = "human")
-# wrappedEnv = gym.wrappers.RecordEpisodeStatistics(env)  # Records episode-reward
 
-while True:
-    observation, info = env.reset()
+# Create and wrap the environment, healthy z range is set to avoid episodes lasting too long
+#  with ant stuck on back
+env = gym.make("Ant-v4", healthy_z_range = (0.5, 1))
+
+# Number of episodes to train for
+totalNumEpisodes = 100000
+inputDims = env.observation_space.shape[0]
+outputDims = env.action_space.shape[0]
+totalRewards = []
+
+agent = REINFORCE(inputDims, outputDims)
+
+# Run algorithm for set number of episodes
+for episode in range(totalNumEpisodes):
+    # Reset environment and keep stepping until episode ends
+    state, info = env.reset()
 
     terminated = False
     while terminated == False:
-        action = agent.chooseAction(observation)
+        # Choose an action based on the state, observe result, update network
+        action = agent.chooseAction(state)
 
-        observation, reward, terminated, truncated, info = env.step(action)
+        state, reward, terminated, truncated, info = env.step(action)
+        agent.rewards.append(reward)
+
+    agent.updateNetwork()
+
+    # Print average reward every 100 episodes
+    if episode % 100 == 0:
+        try:
+            averageReward = np.mean(agent.fullRewards[episode - 100:])
+        except:
+            averageReward = 0
+        print("Episode:", episode, "Average Reward:", averageReward)
+    # Plot graph every 1000 episodes, plotting will stop training, disable if you want to leave it to run
+    if episode % 1000 == 0 and episode != 0:
+        plot(agent)
+
+
+# Create a new environment, this one will render episodes to show result of training
+env = gym.make("Ant-v4", healthy_z_range = (0.5, 1), render_mode = "human")
+
+# Kepp running algorithm forever
+while True:
+    state, info = env.reset()
+
+    terminated = False
+    while terminated == False:
+        action = agent.chooseAction(state)
+
+        state, reward, terminated, truncated, info = env.step(action)
         agent.rewards.append(reward)
 
     agent.updateNetwork()
