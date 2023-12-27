@@ -61,6 +61,10 @@ class ActorCritic(torch.nn.Module):
         means = self.modelMean(x)
         stdDevs = torch.log(1 + torch.exp(self.modelStdDev(x)))
 
+        # Ensure stdDevs are positive and not too small
+        epsilon = 1e-6  # Small constant to prevent zero or very small stdDev
+        stdDevs = torch.clamp(stdDevs, min=epsilon)
+
         # Critic simply returns predicted value of a state
         Qvalue = self.critic(torch.tensor(state))
 
@@ -176,9 +180,6 @@ class A2C():
                     # Every 100 episodes print out average reward
                     if episode % 100 == 0:                    
                         print("episode: {}, reward: {}, average reward: {}".format(episode, np.sum(rewards), self.averageRewards[-1]))
-                    # Plot graph every 1000 episodes, plotting stops training
-                    if episode % 1000 == 0 and episode != 0:
-                        self.plot()
                     break
                 
             self.updateNetwork(QValues, rewards, probabilities, entropies, terminateds)
