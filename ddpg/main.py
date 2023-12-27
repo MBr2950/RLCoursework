@@ -59,7 +59,6 @@ class ActorNetwork(torch.nn.Module):
 
        #Inspired by:
        #https://github.com/DLR-RM/stable-baselines3/issues/93
-       #May need to cite
 
          
 ## Defining the Critic class
@@ -122,7 +121,7 @@ rewardlist = list()
 rewards_to_plot = list()
 
 # Main loop iterating over each episode
-for i in range(10000):
+for i in range(1000):
     observation, info = env.reset()
 
     while (True):
