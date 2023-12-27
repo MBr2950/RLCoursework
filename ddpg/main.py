@@ -120,7 +120,7 @@ rewardlist = list()
 rewards_to_plot = list()
 
 # Main loop iterating over each episode
-for i in range(1000):
+for i in range(10000):
     observation, info = env.reset()
 
     while (True):
@@ -174,6 +174,7 @@ for i in range(1000):
 torch.save(pi1.state_dict(), 'actor_model.pth') # Save Actor Model
 torch.save(q1.state_dict(), 'critic_model.pth') # Save Critic Model
 
+# Close the environment
 env.close()
 
 # Plotting results

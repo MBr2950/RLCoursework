@@ -111,15 +111,16 @@ for episode in range(num_episodes):
 
         # Perform the action in the environment
         observation, reward, terminated, truncated, info = env.step(action)
+
+        # Calculate total reward  
         total_reward += reward
 
         # Check for the end of the episode
         if terminated or truncated:
             break
 
-    # Calculate and record the average reward for this episode
-    average_reward = total_reward
-    average_episode_rewards.append(average_reward)
+    # Calculate and record the total reward for this episode
+    average_episode_rewards.append(total_reward)
 
 # Close the environment
 env.close()

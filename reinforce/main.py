@@ -160,11 +160,14 @@ for episode in range(totalNumEpisodes):
     if episode % 1000 == 0 and episode != 0:
         env.plot()
 
+# Close the environment
+env.close()
+
 # Create a new environment, this one will render episodes to show result of training
 env = gym.make("Ant-v4", healthy_z_range = (0.5, 1), render_mode = "human")
 
-# Keep running algorithm forever
-while True:
+# Keep running algorithm
+for i in range(100):
     state, info = env.reset()
 
     terminated = False
@@ -174,3 +177,6 @@ while True:
         agent.rewards.append(reward)
 
     agent.updateNetwork()
+
+# Close the environment
+env.close()

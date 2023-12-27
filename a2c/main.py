@@ -210,5 +210,11 @@ if __name__ == "__main__":
     a2c = A2C(env)
     a2c.main(env)
 
+    # Close the environment
+    env.close()
+
     env = gym.make("Ant-v4", healthy_z_range = (0.5, 1), render_mode = "human")
     a2c.main(env)
+
+    # Close the environment
+    env.close()
