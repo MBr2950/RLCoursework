@@ -1,17 +1,15 @@
-# Code is largely based off
-# https://gymnasium.farama.org/tutorials/training_agents/reinforce_invpend_gym_v26/#sphx-glr-tutorials-training-agents-reinforce-invpend-gym-v26-py
+# Based off https://gymnasium.farama.org/tutorials/training_agents/reinforce_invpend_gym_v26/#sphx-glr-tutorials-training-agents-reinforce-invpend-gym-v26-py
 
 import gymnasium as gym
 import numpy as np
 import torch, pandas, seaborn
 import matplotlib.pyplot
 
-# Neural network for function approximation
+# Actor neural network for function approximation
 class ActorCritic(torch.nn.Module):
     def __init__(self, inputDims, outputDims):
+        """Initialises the Actor network."""
         super(ActorCritic, self).__init__()
-        # Hyperparameters set arbitrarily
-        self.learningRate = 0.0003
 
         layers = [
             torch.nn.Linear(inputDims, 64),
@@ -34,82 +32,67 @@ class ActorCritic(torch.nn.Module):
             torch.nn.Linear(32, outputDims)
         )
 
-
-        self.optimiser = torch.optim.Adam(self.model.parameters(), lr=self.learningRate)
+        self.optimizer = torch.optim.SGD(self.parameters(), lr=0.01, momentum=0.5)
 
         # Avoids type issues
         self.double()
 
-
     def forward(self, state):
-        # x contains the actual values at nodes
+        """Performs forward pass through network."""
+        # contains the actual values at nodes
         x = self.model(torch.tensor(state))
 
         # Mean and standard deviation of predicted best action are
         #  returned, to allow for sampling from normal distribution
         means = self.modelMean(x)
-        stdDevs = torch.log(
-            1 + torch.exp(self.modelStdDev(x))
-        )
+        stdDevs = torch.log(1 + torch.exp(self.modelStdDev(x)))
 
         return means, stdDevs
 
-
-    # Update parameters based on the loss of the current policy
     def update(self, loss):
-        self.optimiser.zero_grad()
+        """Trains the network."""
+        self.optimizer.zero_grad()
         loss.backward()
-        self.optimiser.step()
+        self.optimizer.step()
 
-
-# Carries out the steps of the REINFORCE algorithm
+# Carries out the REINFORCE algorithm
 class REINFORCE:
     def __init__(self, inputDims, outputDims):
-        # Number of observations
-        self.inputDims = inputDims
-        # Number of actions
-        self.outputDims = outputDims
+        """Initiates the algorithm."""
+        self.inputDims = inputDims # Number of observations 
+        self.outputDims = outputDims # Number of actions
 
         # Hyperparameters set arbitrarily
-        self.learningRate = 0.0003
-        self.gamma = 0.99
+        self.gamma = 0.9
 
-        # probabilities stores the probability of taking a given action, 
-        # rewards stores the reward of that action
-        # fullRewards stores the total reward of an episode
-        self.probabilities = []
-        self.rewards = []
-        self.fullRewards = []
+        self.probabilities = [] # stores the probability of taking a given action
+        self.rewards = [] # stores the reward of that action
+        self.fullRewards = [] # stores the total rewards of an episode
 
         # Instance of neural network
         self.network = ActorCritic(inputDims, outputDims)
 
-
-    # Samples an action from the distribution according to mean
-    #  and standard deviation of the predicted best action
     def chooseAction(self, state):
+        """Samples an action from the distribution according to mean and standard deviation of the predicted best action."""
         means, stdDevs = self.network(state)
 
         # Defines a distibution for each action, samples from it, then finds the 
-        # probability of taking that action, for calculating loss
+        # log probability of taking that action, for calculating loss
         actions = []
         distributions = []
-        # Probability of all actions being taken together
         fullProbability = 0
         
         for i in range(self.outputDims):
             distributions.append(torch.distributions.normal.Normal(means[i], stdDevs[i]))
             actions.append(distributions[i].sample())
-            
             fullProbability += distributions[i].log_prob(actions[i])
 
         self.probabilities.append(fullProbability / outputDims)
 
         return actions
 
-        
-    #Updates the network 
     def updateNetwork(self):
+        """Updates the network."""
         gradient = 0
         gradients = []
         loss = 0
@@ -131,9 +114,8 @@ class REINFORCE:
         self.probabilities = []
         self.rewards = []
 
-
-# Creates a graph showing average rewards over time
 def plot(agent):
+    """Creates a graph showing average rewards over time."""
     smoothedRewards = pandas.Series.rolling(pandas.Series(agent.fullRewards), 10).mean()
     smoothedRewards = [element for element in smoothedRewards]
     matplotlib.pyplot.plot(agent.fullRewards)
@@ -143,13 +125,10 @@ def plot(agent):
     matplotlib.pyplot.ylabel('Reward')
     matplotlib.pyplot.show()
 
-
-# Create and wrap the environment, healthy z range is set to avoid episodes lasting too long
-#  with ant stuck on back
-env = gym.make("Ant-v4", healthy_z_range = (0.5, 1))
+env = gym.make('Ant-v4', healthy_z_range = (0.5, 1.0), exclude_current_positions_from_observation=False)
 
 # Number of episodes to train for
-totalNumEpisodes = 100000
+totalNumEpisodes = 10000
 inputDims = env.observation_space.shape[0]
 outputDims = env.action_space.shape[0]
 totalRewards = []
@@ -162,10 +141,9 @@ for episode in range(totalNumEpisodes):
     state, info = env.reset()
 
     terminated = False
-    while terminated == False:
+    while not terminated:
         # Choose an action based on the state, observe result, update network
         action = agent.chooseAction(state)
-
         state, reward, terminated, truncated, info = env.step(action)
         agent.rewards.append(reward)
 
@@ -178,22 +156,20 @@ for episode in range(totalNumEpisodes):
         except:
             averageReward = 0
         print("Episode:", episode, "Average Reward:", averageReward)
-    # Plot graph every 1000 episodes, plotting will stop training, disable if you want to leave it to run
+    # Plot graph every 1000 episodes, plotting stops training
     if episode % 1000 == 0 and episode != 0:
-        plot(agent)
-
+        env.plot()
 
 # Create a new environment, this one will render episodes to show result of training
 env = gym.make("Ant-v4", healthy_z_range = (0.5, 1), render_mode = "human")
 
-# Kepp running algorithm forever
+# Keep running algorithm forever
 while True:
     state, info = env.reset()
 
     terminated = False
-    while terminated == False:
+    while not terminated:
         action = agent.chooseAction(state)
-
         state, reward, terminated, truncated, info = env.step(action)
         agent.rewards.append(reward)
 
