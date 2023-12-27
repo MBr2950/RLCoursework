@@ -3,6 +3,7 @@
 import gymnasium as gym
 import numpy as np
 import torch, pandas, seaborn
+from torch import nn
 import matplotlib.pyplot
 
 # Actor neural network for function approximation
@@ -12,12 +13,13 @@ class ActorCritic(torch.nn.Module):
         super(ActorCritic, self).__init__()
 
         layers = [
-            torch.nn.Linear(inputDims, 64),
-            torch.nn.ReLU(),
-            torch.nn.Linear(64, 32),
-            torch.nn.ReLU(),
-            torch.nn.Linear(32, 32),
-            torch.nn.ReLU(),
+            nn.Linear(inputDims, 256),
+            nn.ReLU(),
+            nn.Linear(256, 256),
+            nn.ReLU(),
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Linear(128, outputDims)
         ]
 
         self.model = torch.nn.Sequential(*layers)
@@ -128,7 +130,7 @@ def plot(agent):
 env = gym.make('Ant-v4', healthy_z_range = (0.5, 1.0), exclude_current_positions_from_observation=False)
 
 # Number of episodes to train for
-totalNumEpisodes = 10000
+totalNumEpisodes = 100000
 inputDims = env.observation_space.shape[0]
 outputDims = env.action_space.shape[0]
 totalRewards = []

@@ -1,5 +1,4 @@
-#  pseudocode:
-#  https://moodle.bath.ac.uk/mod/page/view.php?id=1146268
+# Based off  https://moodle.bath.ac.uk/mod/page/view.php?id=1146268
   
 import gymnasium as gym
 import torch
@@ -120,7 +119,7 @@ rewardlist = list()
 rewards_to_plot = list()
 
 # Main loop iterating over each episode
-for i in range(10000):
+for i in range(100000):
     observation, info = env.reset()
 
     while (True):

@@ -1,6 +1,7 @@
 # Based off https://towardsdatascience.com/understanding-actor-critic-methods-931b97b6df3f
 
 import torch, pandas, matplotlib.pyplot
+from torch import nn
 import gymnasium as gym
 import numpy as np
 
@@ -11,24 +12,28 @@ class ActorCritic(torch.nn.Module):
         super(ActorCritic, self).__init__()
 
         actorLayers = [
-            torch.nn.Linear(inputDims, 64),
-            torch.nn.ReLU(),
-            torch.nn.Linear(64, 32),
-            torch.nn.ReLU(),
-            torch.nn.Linear(32, 32),
-            torch.nn.ReLU(),
+            nn.Linear(inputDims, 256),
+            nn.ReLU(),
+            nn.Linear(256, 256),
+            nn.ReLU(),
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Linear(128, outputDims)
         ]
 
         criticLayers = [
-            torch.nn.Linear(inputDims, 64),
-            torch.nn.ReLU(),
-            torch.nn.Linear(64, 32),
-            torch.nn.ReLU(),
-            torch.nn.Linear(32, 1),
-            torch.nn.ReLU(),
+            nn.Linear(inputDims, 256),
+            nn.ReLU(),
+            nn.Linear(256, 256),
+            nn.ReLU(),
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Linear(128, 1)
         ]
 
         self.model = torch.nn.Sequential(*actorLayers)
+
+        self.critic = torch.nn.Sequential(*criticLayers)
 
         # Mean and standard deviation of actions are found, for 
         # sampling actions from a normal distribution
@@ -39,8 +44,6 @@ class ActorCritic(torch.nn.Module):
         self.modelStdDev = torch.nn.Sequential(
             torch.nn.Linear(32, outputDims)
         )
-
-        self.critic = torch.nn.Sequential(*criticLayers)
 
         self.optimizer = torch.optim.SGD(self.parameters(), lr=0.01, momentum=0.5)
 
@@ -76,7 +79,7 @@ class A2C():
 
         # Hyperparameters set arbitrarily
         self.gamma = 0.9 # Discount value
-        self.totalNumEpisodes = 10000 # Number of episodes
+        self.totalNumEpisodes = 100000 # Number of episodes
         # self.lambdaValue = 0.95 # For calculating GAE
 
     def chooseAction(self, means, stdDevs):
@@ -86,8 +89,7 @@ class A2C():
             distribution = torch.distributions.Normal(means, stdDevs)
             action = distribution.sample()
             probability = distribution.log_prob(action)
-            # Entropy is a measure of randomness which helps mitigate variance
-            entropy = distribution.entropy()
+            entropy = distribution.entropy() # Entropy is a measure of randomness which helps mitigate variance
 
             return action, probability, entropy
         else:
