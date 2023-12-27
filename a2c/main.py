@@ -19,7 +19,7 @@ class ActorCritic(torch.nn.Module):
             nn.ReLU(),
             nn.Linear(256, 128),
             nn.ReLU(),
-            nn.Linear(128, outputDims)
+            nn.Linear(128, 32)
         ]
 
         criticLayers = [
