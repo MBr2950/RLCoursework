@@ -8,4 +8,6 @@ This repository is dedicated to the exploration of various reinforcement learnin
 
 - `DDPG Algorithm`: Implementation of the Deep Deterministic Policy Gradient (DDPG) algorithm.
 
-- `Reinforce A2C Algorithm`: This section implements the Reinforce Algorithm with Advantage Actor-Critic (A2C) approach.
+- `Reinforce Algorithm`: Contains the implementation of the Reinforce algorithm.
+
+- `Reinforce A2C Algorithm`: This section implements the Reinforce Algorithm with the Advantage Actor-Critic (A2C) approach.
