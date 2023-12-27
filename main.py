@@ -106,7 +106,7 @@ for i in range(100):
     state = observation
     action = np.random.random_sample(size = 8)
     action = (action - 0.5) * 2 # Scales properly (1.0, 1.0)
-    observation, reward, terminated, truncuated, info = env.step(action)
+    observation, reward, terminated, truncated, info = env.step(action)
     D.append([state, action, reward, observation])
 
 pi1 = ActorNetwork()
@@ -136,7 +136,7 @@ for i in range(10000):
         action = np.clip(action, -1.0, 1.0)
 
         state = observation
-        observation, reward, terminated, truncuated, info = env.step(action)
+        observation, reward, terminated, truncated, info = env.step(action)
         D.append([state, action, reward, observation])
         rewardlist.append(reward)
 
@@ -158,7 +158,7 @@ for i in range(10000):
         q2.Refresh(q1)
 
         # Ends the episode
-        if terminated or truncuated:
+        if terminated or truncated:
             observation, info = env.reset()
             break
     
@@ -183,6 +183,6 @@ df1 = pd.DataFrame(rewards_to_plot).melt()
 df1.rename(columns={"variable": "episodes", "value": "reward"}, inplace=True)
 sns.set(style="darkgrid", context="talk", palette="rainbow")
 sns.lineplot(x="episodes", y="reward", data=df1).set(
-    title="Training REINFORCE for Ant-v4 - Average Rewards per Episode"
+    title="Training REINFORCE for Ant-v4 - Average Reward per Episode"
 )
 plt.show()

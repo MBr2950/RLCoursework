@@ -14,15 +14,16 @@ class ActorNetwork(torch.nn.Module):
     def __init__(self):
         """Initialises the Actor network."""
         super(ActorNetwork, self).__init__()
-
+        
         self.NN = nn.Sequential(
-            nn.Linear(29, 100),
+            nn.Linear(29, 256),
             nn.ReLU(),
-            nn.Linear(100, 100),
+            nn.Linear(256, 256),
             nn.ReLU(),
-            nn.Linear(100, 32),
+            nn.Linear(256, 128),
             nn.ReLU(),
-            nn.Linear(32, 8))
+            nn.Linear(128, 8)
+        )
         
         self.optimizer = torch.optim.SGD(self.parameters(), lr=0.01, momentum=0.5)
 
@@ -58,17 +59,14 @@ class CriticNetwork(torch.nn.Module):
         super(CriticNetwork, self).__init__()
 
         self.NN = nn.Sequential(
-            nn.Linear(37, 120),
+            nn.Linear(37, 256),
             nn.ReLU(),
-            nn.Linear(120, 60),
+            nn.Linear(256, 256),
             nn.ReLU(),
-            nn.Linear(60, 45),
+            nn.Linear(256, 128),
             nn.ReLU(),
-            nn.Linear(45, 30),
-            nn.ReLU(),
-            nn.Linear(30, 10),
-            nn.ReLU(),
-            nn.Linear(10, 1))
+            nn.Linear(128, 1)
+        )
         
         self.optimizer = torch.optim.SGD(self.parameters(), lr=0.01, momentum=0.5)
     
@@ -100,7 +98,7 @@ loaded_q1.load_state_dict(torch.load('./critic_model.pth'))
 loaded_pi1.eval()
 loaded_q1.eval()
 
-num_episodes = 1000  # Define the number of episodes for evaluation
+num_episodes = 100  # Define the number of episodes for evaluation
 average_episode_rewards = []  # To store the average reward per episode
 
 for episode in range(num_episodes):
