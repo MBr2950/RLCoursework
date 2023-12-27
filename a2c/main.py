@@ -59,11 +59,8 @@ class ActorCritic(torch.nn.Module):
         # Mean and standard deviation of predicted best action are
         #  returned, to allow for sampling from normal distribution
         means = self.modelMean(x)
-        stdDevs = torch.log(1 + torch.exp(self.modelStdDev(x)))
-
-        # Ensure stdDevs are positive and not too small
         epsilon = 1e-6  # Small constant to prevent zero or very small stdDev
-        stdDevs = torch.clamp(stdDevs, min=epsilon)
+        stdDevs = torch.log(1 + torch.exp(self.modelStdDev(x))) + epsilon
 
         # Critic simply returns predicted value of a state
         Qvalue = self.critic(torch.tensor(state))
