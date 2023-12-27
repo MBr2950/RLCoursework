@@ -2,6 +2,7 @@
 
 import torch, pandas, matplotlib.pyplot
 from torch import nn
+from torch.optim import Adam
 import gymnasium as gym
 import numpy as np
 
@@ -45,7 +46,7 @@ class ActorCritic(torch.nn.Module):
             torch.nn.Linear(32, outputDims)
         )
 
-        self.optimizer = torch.optim.SGD(self.parameters(), lr=0.01, momentum=0.5)
+        self.optimizer = Adam(self.parameters(), lr=0.003)
 
         # Avoids type issues
         self.double()
@@ -78,7 +79,7 @@ class A2C():
         self.averageRewards = [] # Average reward over one episode
 
         # Hyperparameters set arbitrarily
-        self.gamma = 0.9 # Discount value
+        self.gamma = 0.99 # Discount value
         self.totalNumEpisodes = 100000 # Number of episodes
         # self.lambdaValue = 0.95 # For calculating GAE
 

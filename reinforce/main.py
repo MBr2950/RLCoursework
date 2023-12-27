@@ -4,6 +4,7 @@ import gymnasium as gym
 import numpy as np
 import torch, pandas, seaborn
 from torch import nn
+from torch.optim import Adam
 import matplotlib.pyplot
 
 # Actor neural network for function approximation
@@ -19,7 +20,7 @@ class ActorCritic(torch.nn.Module):
             nn.ReLU(),
             nn.Linear(256, 128),
             nn.ReLU(),
-            nn.Linear(128, outputDims)
+            nn.Linear(128, 32)
         ]
 
         self.model = torch.nn.Sequential(*layers)
@@ -34,7 +35,7 @@ class ActorCritic(torch.nn.Module):
             torch.nn.Linear(32, outputDims)
         )
 
-        self.optimizer = torch.optim.SGD(self.parameters(), lr=0.01, momentum=0.5)
+        self.optimizer = Adam(self.parameters(), lr=0.003)
 
         # Avoids type issues
         self.double()
@@ -48,6 +49,10 @@ class ActorCritic(torch.nn.Module):
         #  returned, to allow for sampling from normal distribution
         means = self.modelMean(x)
         stdDevs = torch.log(1 + torch.exp(self.modelStdDev(x)))
+
+        # Ensure stdDevs are positive and not too small
+        epsilon = 1e-6  # Small constant to prevent zero or very small stdDev
+        stdDevs = torch.clamp(stdDevs, min=epsilon)
 
         return means, stdDevs
 
@@ -65,7 +70,7 @@ class REINFORCE:
         self.outputDims = outputDims # Number of actions
 
         # Hyperparameters set arbitrarily
-        self.gamma = 0.9
+        self.gamma = 0.99
 
         self.probabilities = [] # stores the probability of taking a given action
         self.rewards = [] # stores the reward of that action
@@ -158,9 +163,6 @@ for episode in range(totalNumEpisodes):
         except:
             averageReward = 0
         print("Episode:", episode, "Average Reward:", averageReward)
-    # Plot graph every 1000 episodes, plotting stops training
-    if episode % 1000 == 0 and episode != 0:
-        env.plot()
 
 # Close the environment
 env.close()
@@ -169,7 +171,7 @@ env.close()
 env = gym.make("Ant-v4", healthy_z_range = (0.5, 1), render_mode = "human")
 
 # Keep running algorithm
-for i in range(100):
+for i in range(totalNumEpisodes):
     state, info = env.reset()
 
     terminated = False
