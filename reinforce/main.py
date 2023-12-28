@@ -142,13 +142,13 @@ agent = REINFORCE(inputDims, outputDims)
 # Run algorithm for set number of episodes
 for episode in range(totalNumEpisodes):
     # Reset environment and keep stepping until episode ends
-    state, info = env.reset()
+    state, _ = env.reset()
 
     terminated = False
     while not terminated:
         # Choose an action based on the state, observe result, update network
         action = agent.chooseAction(state)
-        state, reward, terminated, truncated, info = env.step(action)
+        state, reward, terminated, truncated, _ = env.step(action)
         agent.rewards.append(reward)
 
     agent.updateNetwork()

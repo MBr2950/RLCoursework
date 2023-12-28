@@ -149,7 +149,7 @@ class A2C():
             terminateds = []
 
             # Resets the environment, then runs until terminated or truncated
-            state, info = env.reset()
+            state, _ = env.reset()
             terminated = False
             truncated = False
 
@@ -158,7 +158,7 @@ class A2C():
                 means, stdDevs, Qvalue = self.actorCritic.forward(state)
                 Qvalue = Qvalue.detach().numpy()
                 action, probability, entropy = self.chooseAction(means, stdDevs)
-                newState, reward, terminated, truncated, info = env.step(action)
+                newState, reward, terminated, truncated, _ = env.step(action)
 
                 rewards.append(reward)
                 QValues.append(Qvalue)

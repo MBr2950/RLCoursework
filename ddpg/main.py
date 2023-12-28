@@ -29,7 +29,7 @@ class ActorNetwork(torch.nn.Module):
             nn.Linear(128, 8)
         )
         
-        self.optimizer = torch.optim.SGD(self.parameters(), lr=0.01, momentum=0.5)
+        self.optimizer = torch.optim.SGD(self.parameters(), lr=0.003, momentum=0.5)
 
     def ChooseAction(self, State):
         """Uses the NN to estimate an action for a given state."""
@@ -76,7 +76,7 @@ class CriticNetwork(torch.nn.Module):
             nn.Linear(128, 1)
         )
         
-        self.optimizer = torch.optim.SGD(self.parameters(), lr=0.01, momentum=0.5)
+        self.optimizer = torch.optim.SGD(self.parameters(), lr=0.003, momentum=0.5)
     
     def ActionValue(self, State, Action):
         """Uses the NN to estimate the action-value for a given state and action."""
@@ -114,7 +114,7 @@ q2 = CriticNetwork()
 
 beta = 0.01 # Incremental refreshing rate
 minibatch = 5 # Taken from D
-gamma = 0.9 # Discounting on future rewards
+gamma = 0.99 # Discounting on future rewards
 rewardlist = list()
 rewards_to_plot = list()
 
@@ -158,14 +158,14 @@ for i in range(100000):
         if terminated or truncated:
             observation, info = env.reset()
             break
-    
+
     # Calculates avg of rewards for last 100 episodes
     if i == 0:
         avgReward = sum(rewardlist)
         print("Episode: " + str(i) + ". Reward Avg = " + str(avgReward))
     elif i % 100 == 0:
         avgReward = sum(rewardlist) / 100
-        rewards_to_plot.append(avgReward)
+        rewards_to_plot.append()
         rewardlist = list()
         print("Episode: " + str(i) + ". Reward Avg = " + str(avgReward))
 
@@ -181,6 +181,6 @@ df1 = pd.DataFrame(rewards_to_plot).melt()
 df1.rename(columns={"variable": "episodes", "value": "reward"}, inplace=True)
 sns.set(style="darkgrid", context="talk", palette="rainbow")
 sns.lineplot(x="episodes", y="reward", data=df1).set(
-    title="Training REINFORCE for Ant-v4 - Average Reward per Episode"
+    title="Training REINFORCE for Ant-v4 - Average Reward every 100 Episodes"
 )
 plt.show()
