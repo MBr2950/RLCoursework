@@ -56,7 +56,7 @@ class ActorNetwork(torch.nn.Module):
         for param1, param2 in zip(self.parameters(), pi.parameters()):
             param1 = beta * param1.data + (1-beta) * param2.data
 
-       #Inspired by:
+       #Method inspired by:
        #https://github.com/DLR-RM/stable-baselines3/issues/93
 
          

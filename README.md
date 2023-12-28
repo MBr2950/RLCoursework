@@ -6,6 +6,8 @@ This repository is dedicated to the exploration of various reinforcement learnin
 
 ## Repository Contents
 
+- `Random Agent`: A baseline from which to compare the other algorithms.
+
 - `DDPG Algorithm`: Implementation of the Deep Deterministic Policy Gradient (DDPG) algorithm.
 
 - `Reinforce Algorithm`: Contains the implementation of the Reinforce algorithm.
