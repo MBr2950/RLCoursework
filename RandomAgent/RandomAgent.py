@@ -28,7 +28,6 @@ for i in range():
             observation, info = env.reset()
             break
 
-
     if i == 0:
         avgReward = sum(rewardlist)
         #print("Episode: " + str(i) + ". Reward Avg = " + str(avgReward))
@@ -37,8 +36,6 @@ for i in range():
         rewards_to_plot.append(avgReward)
         rewardlist = list()
         #print("Episode: " + str(i) + ". Reward Avg = " + str(avgReward))
-
-
 
 df1 = pd.DataFrame(rewards_to_plot).melt()
 df1.rename(columns={"variable": "episodes", "value": "reward"}, inplace=True)
