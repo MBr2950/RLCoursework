@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-env = gym.make('Ant-v4', healthy_z_range = (0.5, 1), render_mode="human")
+env = gym.make('Ant-v4', render_mode="human")
 observation, info = env.reset()
 
 ## Defining the Actor class

@@ -10,7 +10,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from collections import deque
 
-env = gym.make('Ant-v4', healthy_z_range = (0.5, 1.0), exclude_current_positions_from_observation=False)
+env = gym.make('Ant-v4')
 observation, info = env.reset()
 
 ## Defining the Actor class
@@ -96,7 +96,7 @@ class CriticNetwork(torch.nn.Module):
 
 # Replay memory- holds all transition information (limited at maxlength):
 # Holds queue of multiple: [0-State, 1-Action, 2-Reward, 3-Observation]
-D = deque(maxlen=100000)
+D = deque(maxlen=10000)
 
 # Allows agent to wander randomly for some time steps
 observation, info = env.reset()
@@ -119,7 +119,7 @@ rewardlist = list()
 rewards_to_plot = list()
 
 # Main loop iterating over each episode
-for i in range(100000):
+for i in range(10000):
     observation, info = env.reset()
 
     while (True):

@@ -129,10 +129,10 @@ def plot(agent):
     matplotlib.pyplot.ylabel('Reward')
     matplotlib.pyplot.show()
 
-env = gym.make('Ant-v4', healthy_z_range = (0.5, 1.0), exclude_current_positions_from_observation=False)
+env = gym.make('Ant-v4')
 
 # Number of episodes to train for
-totalNumEpisodes = 100000
+totalNumEpisodes = 10000
 inputDims = env.observation_space.shape[0]
 outputDims = env.action_space.shape[0]
 totalRewards = []
@@ -165,7 +165,7 @@ for episode in range(totalNumEpisodes):
 env.close()
 
 # Create a new environment, this one will render episodes to show result of training
-env = gym.make("Ant-v4", healthy_z_range = (0.5, 1), render_mode = "human")
+env = gym.make("Ant-v4", render_mode = "human")
 
 # Keep running algorithm
 for i in range(totalNumEpisodes):

@@ -162,7 +162,7 @@ def train():
     gamma = 0.9
     epochs = 3 # stabilises the policy calculation
     eps_clip = 0.2 # limits policy update 
-    episodes = 20000 # max training episodes
+    episodes = 10000 # max training episodes
     update_timestep = 2048 # update policy every n timesteps
 
     ppo = PPO(state_dim, action_dim, learning_rate, gamma, epochs, eps_clip)
@@ -170,10 +170,11 @@ def train():
 
     timestep = 0
     rewards_to_plot = list()
+    rewards = list()
 
     for episode in range(episodes):
         state, _ = env.reset()
-        rewards = list()
+        total_rewards = 0
 
         while True:
             timestep += 1
@@ -181,6 +182,7 @@ def train():
             # Running policy_old:
             action, logprob = ppo.select_action(state)
             state, reward, terminated, truncated, _ = env.step(action)
+            total_rewards += reward
             rewards.append(reward)
 
             # Saving state and reward:
@@ -199,15 +201,13 @@ def train():
             if terminated or truncated:
                 break
 
+        # Store total rewards for episode
+        rewards_to_plot.append(total_rewards)
+
         # Calculates avg of rewards for last 100 episodes
-        if episode == 0:
-            avgReward = sum(rewards)
-            print("Episode: " + str(episode) + ". Reward Avg = " + str(avgReward))
-        elif episode % 100 == 0:
-            avgReward = sum(rewards) / 100
-            rewards_to_plot.append(avgReward)
+        if episode % 100 == 0 and episode != 0:
+            print("Episode: " + str(episode) + ". Avg Reward (last 100 episodes)  = " + str(sum(rewards)/100))
             rewards = list()
-            print("Episode: " + str(episode) + ". Reward Avg = " + str(avgReward))
 
     env.close() # Close the environment
 
@@ -218,10 +218,16 @@ if __name__ == '__main__':
     rewards_to_plot = train()
 
     # Plotting results
-    df1 = pd.DataFrame(rewards_to_plot).melt()
-    df1.rename(columns={"variable": "episodes", "value": "reward"}, inplace=True)
+    # Calculate total and rolling rewards in DataFrame
+    df = pd.DataFrame({'Episode': range(1, len(rewards_to_plot) + 1), 'Total Reward': rewards_to_plot})
+    df['Rolling Avg Reward'] = df['Total Reward'].rolling(window=100).mean()
+    # Plot total and rolling rewards
     sns.set(style="darkgrid", context="talk", palette="rainbow")
-    sns.lineplot(x="episodes", y="reward", data=df1).set(
-        title="Training PPO for Ant-v4 - Average Rewards per 100 Episodes"
-    )
+    plt.figure(figsize=(12, 6))
+    sns.lineplot(x='Episode', y='Total Reward', data=df, label='Total Reward', color='blue')
+    sns.lineplot(x='Episode', y='Rolling Avg Reward', data=df, label='Average Reward (100 episodes)', color='red')
+    # Set plot title and labels
+    plt.title("Training PPO for Ant-v4")
+    plt.xlabel("Episode")
+    plt.ylabel("Reward")
     plt.show()

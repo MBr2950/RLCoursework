@@ -81,7 +81,7 @@ class A2C():
 
         # Hyperparameters set arbitrarily
         self.gamma = 0.9 # Discount value
-        self.totalNumEpisodes = 100000 # Number of episodes
+        self.totalNumEpisodes = 10000 # Number of episodes
         # self.lambdaValue = 0.95 # For calculating GAE
 
     def chooseAction(self, means, stdDevs):
@@ -207,14 +207,14 @@ class A2C():
         matplotlib.pyplot.show()
 
 if __name__ == "__main__":
-    env = gym.make("Ant-v4", healthy_z_range = (0.5, 1), exclude_current_positions_from_observation=False)
+    env = gym.make("Ant-v4")
     a2c = A2C(env)
     a2c.main(env)
 
     # Close the environment
     env.close()
 
-    env = gym.make("Ant-v4", healthy_z_range = (0.5, 1), render_mode = "human")
+    env = gym.make("Ant-v4", render_mode = "human")
     a2c.main(env)
 
     # Close the environment
