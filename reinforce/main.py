@@ -67,7 +67,7 @@ class REINFORCE:
         self.outputDims = outputDims # Number of actions
 
         # Hyperparameters set arbitrarily
-        self.gamma = 0.99
+        self.gamma = 0.9
 
         self.probabilities = [] # stores the probability of taking a given action
         self.rewards = [] # stores the reward of that action

@@ -114,7 +114,7 @@ q2 = CriticNetwork()
 
 beta = 0.01 # Incremental refreshing rate
 minibatch = 5 # Taken from D
-gamma = 0.99 # Discounting on future rewards
+gamma = 0.9 # Discounting on future rewards
 rewardlist = list()
 rewards_to_plot = list()
 

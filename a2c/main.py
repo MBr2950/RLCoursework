@@ -80,7 +80,7 @@ class A2C():
         self.averageRewards = [] # Average reward over one episode
 
         # Hyperparameters set arbitrarily
-        self.gamma = 0.99 # Discount value
+        self.gamma = 0.9 # Discount value
         self.totalNumEpisodes = 100000 # Number of episodes
         # self.lambdaValue = 0.95 # For calculating GAE
 
