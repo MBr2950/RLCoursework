@@ -13,3 +13,5 @@ This repository is dedicated to the exploration of various reinforcement learnin
 - `Reinforce Algorithm`: Contains the implementation of the Reinforce algorithm.
 
 - `Reinforce A2C Algorithm`: This section implements the Reinforce Algorithm with the Advantage Actor-Critic (A2C) approach.
+
+- `Proximal Policy Optimisation (PPO) Algorithm`: This section implements the Proximal Policy Optimisation (PPO) algorithm.
