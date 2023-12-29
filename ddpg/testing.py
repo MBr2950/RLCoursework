@@ -1,20 +1,19 @@
 import gymnasium as gym
 import torch
-from torch import nn
-import random
+import torch.nn as nn
+from torch.distributions import MultivariateNormal
 import numpy as np
-import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
-env = gym.make('Ant-v4', render_mode="human")
-observation, info = env.reset()
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+beta = 0.01 # Incremental refreshing rate
 
 ## Defining the Actor class
 class ActorNetwork(torch.nn.Module):
     def __init__(self):
         """Initialises the Actor network."""
         super(ActorNetwork, self).__init__()
-        
+
         self.NN = nn.Sequential(
             nn.Linear(29, 256),
             nn.ReLU(),
@@ -25,7 +24,7 @@ class ActorNetwork(torch.nn.Module):
             nn.Linear(128, 8)
         )
         
-        self.optimizer = torch.optim.SGD(self.parameters(), lr=0.01, momentum=0.5)
+        self.optimizer = torch.optim.SGD(self.parameters(), lr=0.003, momentum=0.5)
 
     def ChooseAction(self, State):
         """Uses the NN to estimate an action for a given state."""
@@ -45,13 +44,12 @@ class ActorNetwork(torch.nn.Module):
         E1.backward()
         E1 = -E1
         self.optimizer.step()
-        
 
     def Refresh(self, pi):
         #Updates pi2 to match pi1
         for param1, param2 in zip(self.parameters(), pi.parameters()):
             param1 = beta * param1.data + (1-beta) * param2.data
-         
+  
 ## Defining the Critic class
 class CriticNetwork(torch.nn.Module):
     def __init__(self):
@@ -68,7 +66,7 @@ class CriticNetwork(torch.nn.Module):
             nn.Linear(128, 1)
         )
         
-        self.optimizer = torch.optim.SGD(self.parameters(), lr=0.01, momentum=0.5)
+        self.optimizer = torch.optim.SGD(self.parameters(), lr=0.003, momentum=0.5)
     
     def ActionValue(self, State, Action):
         """Uses the NN to estimate the action-value for a given state and action."""
@@ -86,47 +84,37 @@ class CriticNetwork(torch.nn.Module):
         for param1, param2 in zip(self.parameters(), q.parameters()):
             param1 = beta * param1.data + (1-beta) * param2.data
 
-# Initialize the Actor and Critic Networks
-loaded_pi1 = ActorNetwork()
-loaded_q1 = CriticNetwork()
+def test_model():
+    """Loads the trained model and tests it in the render mode."""
+    env = gym.make('Ant-v4', render_mode="human")  
 
-# Load the saved state dictionaries
-loaded_pi1.load_state_dict(torch.load('./actor_model.pth'))
-loaded_q1.load_state_dict(torch.load('./critic_model.pth'))
+    # Initialize the Actor and Critic Networks
+    loaded_pi1 = ActorNetwork()
+    loaded_q1 = CriticNetwork()
 
-# Set the networks to evaluation mode
-loaded_pi1.eval()
-loaded_q1.eval()
+    # Load the saved state dictionaries
+    loaded_pi1.load_state_dict(torch.load('RLCoursework/trained_models/ddpg_actor_model.pth'))
+    loaded_q1.load_state_dict(torch.load('RLCoursework/trained_models/ddpg_critic_model.pth'))
 
-num_episodes = 100  # Define the number of episodes for evaluation
-average_episode_rewards = []  # To store the average reward per episode
+    # Set the networks to evaluation mode
+    loaded_pi1.eval()
+    loaded_q1.eval()
 
-for episode in range(num_episodes):
-    observation, info = env.reset()
-    total_reward = 0
-
+    # Run the environment
+    state, _ = env.reset()
     while True:
-        # Choose an action using the loaded actor network
-        action = loaded_pi1.ChooseAction(observation)
+        # Convert state to tensor and move to device
+        state = torch.from_numpy(state).float().to(device)
 
-        # Perform the action in the environment
-        observation, reward, terminated, truncated, info = env.step(action)
+        # Get action from policy
+        with torch.no_grad():
+            action, _ = loaded_pi1.act(state)
+        
+        # Step in the environment
+        state, _, terminated, truncated, _ = env.step(action.cpu().numpy())
 
-        # Calculate total reward  
-        total_reward += reward
-
-        # Check for the end of the episode
         if terminated or truncated:
-            break
+            state, _ = env.reset()
 
-    # Calculate and record the total reward for this episode
-    average_episode_rewards.append(total_reward)
-
-# Close the environment
-env.close()
-
-# Plotting results
-df = pd.DataFrame({'Episode': range(1, num_episodes + 1), 'Average Reward': average_episode_rewards})
-sns.set(style="darkgrid", context="talk", palette="rainbow")
-sns.lineplot(x='Episode', y='Average Reward', data=df).set(title="Evaluation of REINFORCE on Ant-v4 - Average Rewards per Episode")
-plt.show()
+if __name__ == "__main__":
+    test_model()

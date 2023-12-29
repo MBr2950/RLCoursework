@@ -170,8 +170,8 @@ for i in range(10000):
         print("Episode: " + str(i) + ". Reward Avg = " + str(avgReward))
 
 # Save the trained models
-torch.save(pi1.state_dict(), 'actor_model.pth') # Save Actor Model
-torch.save(q1.state_dict(), 'critic_model.pth') # Save Critic Model
+torch.save(pi1.state_dict(), 'RLCoursework/trained_models/ddpg_actor_model.pth') # Save Actor Model
+torch.save(q1.state_dict(), 'RLCoursework/trained_models/ddpg_critic_model.pth') # Save Critic Model
 
 # Close the environment
 env.close()
