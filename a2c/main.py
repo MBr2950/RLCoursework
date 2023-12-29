@@ -11,25 +11,25 @@ class ActorCritic(torch.nn.Module):
     def __init__(self, inputDims, outputDims):
         """Initialises the Actor network."""
         super(ActorCritic, self).__init__()
-
+        
         actorLayers = [
-            nn.Linear(inputDims, 256),
+            nn.Linear(inputDims, 64),
             nn.ReLU(),
-            nn.Linear(256, 256),
+            nn.Linear(64, 64),
             nn.ReLU(),
-            nn.Linear(256, 128),
+            nn.Linear(64, 32),
             nn.ReLU(),
-            nn.Linear(128, 32)
+            nn.Linear(32, 32)
         ]
 
         criticLayers = [
-            nn.Linear(inputDims, 256),
+            nn.Linear(inputDims, 64),
             nn.ReLU(),
-            nn.Linear(256, 256),
+            nn.Linear(64, 64),
             nn.ReLU(),
-            nn.Linear(256, 128),
+            nn.Linear(64, 32),
             nn.ReLU(),
-            nn.Linear(128, 1)
+            nn.Linear(32, 1)
         ]
 
         self.model = torch.nn.Sequential(*actorLayers)
@@ -46,7 +46,7 @@ class ActorCritic(torch.nn.Module):
             torch.nn.Linear(32, outputDims)
         )
 
-        self.optimizer = Adam(self.parameters(), lr=0.003)
+        self.optimizer = Adam(self.parameters(), lr=0.002)
 
         # Avoids type issues
         self.double()
@@ -160,6 +160,9 @@ class A2C():
                 action, probability, entropy = self.chooseAction(means, stdDevs)
                 newState, reward, terminated, truncated, _ = env.step(action)
 
+                #print(reward)
+                reward *= 1.5
+                
                 rewards.append(reward)
                 QValues.append(Qvalue)
                 probabilities.append(probability)
@@ -173,9 +176,10 @@ class A2C():
                     QValue = QValue.detach().numpy()
                     self.allRewards.append(np.sum(rewards))
                     self.averageRewards.append(np.mean(self.allRewards[-10:]))
-
+                    print(np.sum(rewards))
+                    #x = input()
                     # Every 100 episodes print out average reward
-                    if episode % 100 == 0:                    
+                    if episode % 10 == 0:                    
                         print("episode: {}, reward: {}, average reward: {}".format(episode, np.sum(rewards), self.averageRewards[-1]))
                     break
                 
@@ -207,14 +211,20 @@ class A2C():
         matplotlib.pyplot.show()
 
 if __name__ == "__main__":
-    env = gym.make("Ant-v4")
+    env = gym.make("Ant-v4", healthy_z_range = (0.5, 1), render_mode = "human", exclude_current_positions_from_observation=False)
+
+    np.random.seed(0)
+    torch.manual_seed(0)
+    env.reset(seed=2)
+
     a2c = A2C(env)
     a2c.main(env)
 
     # Close the environment
     env.close()
-
-    env = gym.make("Ant-v4", render_mode = "human")
+    
+    env = gym.make("Ant-v4", healthy_z_range = (0.5, 1), render_mode = "human")
+    env.reset(seed=2)
     a2c.main(env)
 
     # Close the environment
