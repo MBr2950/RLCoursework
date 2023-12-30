@@ -10,21 +10,19 @@ beta = 0.01 # Incremental refreshing rate
 
 ## Defining the Actor class
 class ActorNetwork(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, state_dim, action_dim):
         """Initialises the Actor network."""
         super(ActorNetwork, self).__init__()
 
         self.NN = nn.Sequential(
-            nn.Linear(29, 256),
-            nn.ReLU(),
-            nn.Linear(256, 256),
-            nn.ReLU(),
-            nn.Linear(256, 128),
-            nn.ReLU(),
-            nn.Linear(128, 8)
+            nn.Linear(state_dim, 64),
+            nn.Tanh(),
+            nn.Linear(64, 64),
+            nn.Tanh(),
+            nn.Linear(64, action_dim)
         )
         
-        self.optimizer = torch.optim.SGD(self.parameters(), lr=0.003, momentum=0.5)
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=0.003)
 
     def ChooseAction(self, State):
         """Uses the NN to estimate an action for a given state."""
@@ -44,71 +42,34 @@ class ActorNetwork(torch.nn.Module):
         E1.backward()
         E1 = -E1
         self.optimizer.step()
+        
 
     def Refresh(self, pi):
         #Updates pi2 to match pi1
         for param1, param2 in zip(self.parameters(), pi.parameters()):
             param1 = beta * param1.data + (1-beta) * param2.data
-  
-## Defining the Critic class
-class CriticNetwork(torch.nn.Module):
-    def __init__(self):
-        """Initialises the Critic network."""
-        super(CriticNetwork, self).__init__()
-
-        self.NN = nn.Sequential(
-            nn.Linear(37, 256),
-            nn.ReLU(),
-            nn.Linear(256, 256),
-            nn.ReLU(),
-            nn.Linear(256, 128),
-            nn.ReLU(),
-            nn.Linear(128, 1)
-        )
-        
-        self.optimizer = torch.optim.SGD(self.parameters(), lr=0.003, momentum=0.5)
-    
-    def ActionValue(self, State, Action):
-        """Uses the NN to estimate the action-value for a given state and action."""
-        return self.NN(torch.from_numpy(np.concatenate((State, Action))).float())
-    
-    def Update(self, y1, y2):
-        """Trains the network."""
-        self.optimizer.zero_grad()
-        loss = nn.functional.huber_loss(y1, y2)
-        loss.backward()
-        self.optimizer.step()
-        
-    def Refresh(self, q):
-        """Updates q2 to match q1."""
-        for param1, param2 in zip(self.parameters(), q.parameters()):
-            param1 = beta * param1.data + (1-beta) * param2.data
 
 def test_model():
     """Loads the trained model and tests it in the render mode."""
-    env = gym.make('Ant-v4', render_mode="human")  
+    env = gym.make('Ant-v4', render_mode="human")
+    state_dim = env.observation_space.shape[0]
+    action_dim = env.action_space.shape[0]  
 
-    # Initialize the Actor and Critic Networks
-    loaded_pi1 = ActorNetwork()
-    loaded_q1 = CriticNetwork()
+    # Initialize the Actor network
+    loaded_pi1 = ActorNetwork(state_dim, action_dim)
 
     # Load the saved state dictionaries
     loaded_pi1.load_state_dict(torch.load('RLCoursework/trained_models/ddpg_actor_model.pth'))
-    loaded_q1.load_state_dict(torch.load('RLCoursework/trained_models/ddpg_critic_model.pth'))
 
-    # Set the networks to evaluation mode
+    # Set the network to evaluation mode
     loaded_pi1.eval()
-    loaded_q1.eval()
 
     # Run the environment
     state, _ = env.reset()
     while True:
-        # Convert state to tensor and move to device
-        state = torch.from_numpy(state).float().to(device)
-
         # Get action from policy
         with torch.no_grad():
-            action, _ = loaded_pi1.act(state)
+            action, _ = loaded_pi1.ChooseAction(state)
         
         # Step in the environment
         state, _, terminated, truncated, _ = env.step(action.cpu().numpy())

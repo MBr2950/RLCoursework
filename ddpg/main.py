@@ -10,26 +10,23 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from collections import deque
 
-env = gym.make('Ant-v4')
-observation, info = env.reset()
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 ## Defining the Actor class
 class ActorNetwork(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, state_dim, action_dim):
         """Initialises the Actor network."""
         super(ActorNetwork, self).__init__()
 
         self.NN = nn.Sequential(
-            nn.Linear(29, 256),
-            nn.ReLU(),
-            nn.Linear(256, 256),
-            nn.ReLU(),
-            nn.Linear(256, 128),
-            nn.ReLU(),
-            nn.Linear(128, 8)
+            nn.Linear(state_dim, 64),
+            nn.Tanh(),
+            nn.Linear(64, 64),
+            nn.Tanh(),
+            nn.Linear(64, action_dim)
         )
         
-        self.optimizer = torch.optim.SGD(self.parameters(), lr=0.003, momentum=0.5)
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=0.003)
 
     def ChooseAction(self, State):
         """Uses the NN to estimate an action for a given state."""
@@ -62,21 +59,19 @@ class ActorNetwork(torch.nn.Module):
          
 ## Defining the Critic class
 class CriticNetwork(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, state_dim, action_dim):
         """Initialises the Critic network."""
         super(CriticNetwork, self).__init__()
 
         self.NN = nn.Sequential(
-            nn.Linear(37, 256),
-            nn.ReLU(),
-            nn.Linear(256, 256),
-            nn.ReLU(),
-            nn.Linear(256, 128),
-            nn.ReLU(),
-            nn.Linear(128, 1)
+            nn.Linear(state_dim+action_dim, 64),
+            nn.Tanh(),
+            nn.Linear(64, 64),
+            nn.Tanh(),
+            nn.Linear(64, 1)
         )
         
-        self.optimizer = torch.optim.SGD(self.parameters(), lr=0.003, momentum=0.5)
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=0.003)
     
     def ActionValue(self, State, Action):
         """Uses the NN to estimate the action-value for a given state and action."""
@@ -98,6 +93,10 @@ class CriticNetwork(torch.nn.Module):
 # Holds queue of multiple: [0-State, 1-Action, 2-Reward, 3-Observation]
 D = deque(maxlen=10000)
 
+env = gym.make('Ant-v4', healthy_z_range=(0.5, 1.0))
+state_dim = env.observation_space.shape[0]
+action_dim = env.action_space.shape[0] 
+
 # Allows agent to wander randomly for some time steps
 observation, info = env.reset()
 for i in range(100):
@@ -107,20 +106,21 @@ for i in range(100):
     observation, reward, terminated, truncated, info = env.step(action)
     D.append([state, action, reward, observation])
 
-pi1 = ActorNetwork()
-pi2 = ActorNetwork()
-q1 = CriticNetwork()
-q2 = CriticNetwork()
+pi1 = ActorNetwork(state_dim, action_dim).to(device)
+pi2 = ActorNetwork(state_dim, action_dim).to(device)
+q1 = CriticNetwork(state_dim, action_dim).to(device)
+q2 = CriticNetwork(state_dim, action_dim).to(device)
 
 beta = 0.01 # Incremental refreshing rate
-minibatch = 5 # Taken from D
+minibatch = 5 # Stabilises learning (taken from D)
 gamma = 0.9 # Discounting on future rewards
-rewardlist = list()
 rewards_to_plot = list()
+rewards = list()
 
 # Main loop iterating over each episode
-for i in range(10000):
-    observation, info = env.reset()
+for episode in range(10000):
+    observation, _ = env.reset()
+    total_rewards = 0
 
     while (True):
         # Chooses action, notes new information
@@ -135,7 +135,8 @@ for i in range(10000):
         state = observation
         observation, reward, terminated, truncated, info = env.step(action)
         D.append([state, action, reward, observation])
-        rewardlist.append(reward)
+        total_rewards += reward
+        rewards.append(reward)
 
         # Updates Action-Value estimate (NN)
         for j in range(minibatch):
@@ -143,11 +144,11 @@ for i in range(10000):
             # 0-State, 1- Action, 2- Reward, 3- Observation
             transition = D[random.randint(0, len(D) - 1)]
 
-            # Train q1
+            # Update q1
             q1y = transition[2] + gamma * q2.ActionValue(transition[3], pi2.ChooseAction(transition[3]))
             q1.Update(q1y, q1.ActionValue(transition[0], transition[1]))
 
-            # Train pi1
+            # Update pi1
             pi1.Update(q1.ActionValue(transition[0], pi1.ChooseAction(transition[0])))
         
         # Updates pi2 and q2 to get slightly closer to pi1 and q1
@@ -156,18 +157,16 @@ for i in range(10000):
 
         # Ends the episode
         if terminated or truncated:
-            observation, info = env.reset()
+            observation, _ = env.reset()
             break
 
+    # Store total rewards for episode
+    rewards_to_plot.append(total_rewards)
+
     # Calculates avg of rewards for last 100 episodes
-    if i == 0:
-        avgReward = sum(rewardlist)
-        print("Episode: " + str(i) + ". Reward Avg = " + str(avgReward))
-    elif i % 100 == 0:
-        avgReward = sum(rewardlist) / 100
-        rewards_to_plot.append()
-        rewardlist = list()
-        print("Episode: " + str(i) + ". Reward Avg = " + str(avgReward))
+    if episode % 100 == 0 and episode != 0:
+        print("Episode: " + str(episode) + ". Avg Reward (last 100 episodes)  = " + str(sum(rewards)/100))
+        rewards = list()
 
 # Save the trained models
 torch.save(pi1.state_dict(), 'RLCoursework/trained_models/ddpg_actor_model.pth') # Save Actor Model
@@ -177,10 +176,16 @@ torch.save(q1.state_dict(), 'RLCoursework/trained_models/ddpg_critic_model.pth')
 env.close()
 
 # Plotting results
-df1 = pd.DataFrame(rewards_to_plot).melt()
-df1.rename(columns={"variable": "episodes", "value": "reward"}, inplace=True)
+# Calculate total and rolling rewards in DataFrame
+df = pd.DataFrame({'Episode': range(1, len(rewards_to_plot) + 1), 'Total Reward': rewards_to_plot})
+df['Rolling Avg Reward'] = df['Total Reward'].rolling(window=100).mean()
+# Plot total and rolling rewards
 sns.set(style="darkgrid", context="talk", palette="rainbow")
-sns.lineplot(x="episodes", y="reward", data=df1).set(
-    title="Training REINFORCE for Ant-v4 - Average Reward every 100 Episodes"
-)
+plt.figure(figsize=(12, 6))
+sns.lineplot(x='Episode', y='Total Reward', data=df, label='Total Reward', color='blue')
+sns.lineplot(x='Episode', y='Rolling Avg Reward', data=df, label='Average Reward (100 episodes)', color='red')
+# Set plot title and labels
+plt.title("Training PPO for Ant-v4")
+plt.xlabel("Episode")
+plt.ylabel("Reward")
 plt.show()
