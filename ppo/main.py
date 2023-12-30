@@ -211,6 +211,9 @@ def train():
 
     env.close() # Close the environment
 
+    # Save the trained model
+    torch.save(ppo.policy.state_dict(), 'RLCoursework/trained_models/ppo_policy_state.pth')
+
     return rewards_to_plot
 
 if __name__ == '__main__':
