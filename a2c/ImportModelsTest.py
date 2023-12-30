@@ -174,7 +174,7 @@ class A2C():
                 terminateds.append(terminated)
                 state = newState
                 
-                # If episode is over, perform final updates, and calculate avertage reward
+                # If episode is over, perform final updates, and calculate average reward
                 if terminated == True or truncated == True:
                     means, stdDevs, QValue = self.actorCritic.forward(newState)
                     QValue = QValue.detach().numpy()
@@ -187,7 +187,7 @@ class A2C():
                         print("episode: {}, reward: {}, average reward: {}".format(episode, np.sum(rewards), self.averageRewards[-1]))
                         if self.averageRewards[-1] > maxAverage:
                             maxAverage = self.averageRewards[-1]
-                            torch.save(self.actorCritic, "model.pt") # Save best model so far
+                            torch.save(self.actorCritic, "modelOut.pt") # Save best model so far
                     break
                 
             self.updateNetwork(QValues, rewards, probabilities, entropies, terminateds)
