@@ -20,11 +20,11 @@ class ActorNetwork(torch.nn.Module):
 
         self.NN = nn.Sequential(
             nn.Linear(state_dim, 64),
-            nn.Tanh(),
+            nn.ReLU(),
             nn.Linear(64, 64),
-            nn.Tanh(),
+            nn.ReLU(),
             nn.Linear(64, 32),
-            nn.Tanh(),
+            nn.ReLU(),
             nn.Linear(32, action_dim)
         )
         
@@ -67,11 +67,11 @@ class CriticNetwork(torch.nn.Module):
 
         self.NN = nn.Sequential(
             nn.Linear(state_dim+action_dim, 64),
-            nn.Tanh(),
+            nn.ReLU(),
             nn.Linear(64, 64),
-            nn.Tanh(),
+            nn.ReLU(),
             nn.Linear(64, 32),
-            nn.Tanh(),
+            nn.ReLU(),
             nn.Linear(32, action_dim)
         )
         

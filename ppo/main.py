@@ -19,9 +19,9 @@ class ActorCritic(nn.Module):
         # Actor network
         self.actor = nn.Sequential(
             nn.Linear(state_dim, 64),
-            nn.Tanh(),
+            nn.ReLU(),
             nn.Linear(64, 64),
-            nn.Tanh(),
+            nn.ReLU(),
             nn.Linear(64, action_dim),
             nn.Tanh()
         )
@@ -29,9 +29,9 @@ class ActorCritic(nn.Module):
         # Critic network
         self.critic = nn.Sequential(
             nn.Linear(state_dim, 64),
-            nn.Tanh(),
+            nn.ReLU(),
             nn.Linear(64, 64),
-            nn.Tanh(),
+            nn.ReLU(),
             nn.Linear(64, 1)
         )
 
@@ -177,20 +177,20 @@ def train(env):
         while True:
             timestep += 1
 
-            # Running policy_old:
+            # Running on the old policy
             action, logprob = ppo.select_action(state)
             state, reward, terminated, truncated, _ = env.step(action)
             total_rewards += reward
             rewards.append(reward)
 
-            # Saving state and reward:
+            # Saving states, actions, probabilities, rewards, and terminal
             memory.states.append(torch.tensor(state, dtype=torch.float32))
             memory.actions.append(torch.tensor(action))
             memory.logprobs.append(torch.tensor(logprob))
             memory.rewards.append(reward)
             memory.is_terminals.append(terminated or truncated)
 
-            # update if its time
+            # Update if its time
             if timestep % update_timestep == 0:
                 ppo.update(memory)
                 memory.clear_memory()
