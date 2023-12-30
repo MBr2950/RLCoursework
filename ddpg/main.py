@@ -192,7 +192,7 @@ plt.figure(figsize=(12, 6))
 sns.lineplot(x='Episode', y='Total Reward', data=df, label='Total Reward', color='blue')
 sns.lineplot(x='Episode', y='Rolling Avg Reward', data=df, label='Average Reward (100 episodes)', color='red')
 # Set plot title and labels
-plt.title("Training PPO for Ant-v4")
+plt.title("Training DDPG for Ant-v4")
 plt.xlabel("Episode")
 plt.ylabel("Reward")
 plt.show()

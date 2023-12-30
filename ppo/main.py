@@ -160,7 +160,7 @@ def train(env):
     gamma = 0.9
     epochs = 3 # stabilises the policy calculation
     eps_clip = 0.2 # limits policy update 
-    episodes = 10000 # max training episodes
+    episodes = 5000 # max training episodes
     update_timestep = 2048 # update policy every n timesteps
 
     ppo = PPO(state_dim, action_dim, learning_rate, gamma, epochs, eps_clip)
@@ -216,8 +216,8 @@ if __name__ == '__main__':
     env = gym.make('Ant-v4') # Start environment
 
     # Seeding to replicate results (using 0, 1, and 2)
-    np.random.seed(0)
-    torch.manual_seed(0)
+    #np.random.seed(0)
+    #torch.manual_seed(0)
 
     # Train and store average rewards
     rewards_to_plot = train(env)
