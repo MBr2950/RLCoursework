@@ -151,10 +151,8 @@ class Memory:
         del self.rewards[:]
         del self.is_terminals[:]
 
-def train():
+def train(env):
     """Trains the PPO algorithm on the environment."""
-    env = gym.make('Ant-v4') # Start environment
-
     # Hyperparameters
     state_dim = env.observation_space.shape[0]
     action_dim = env.action_space.shape[0]
@@ -209,16 +207,22 @@ def train():
             print("Episode: " + str(episode) + ". Avg Reward (last 100 episodes)  = " + str(sum(rewards)/100))
             rewards = list()
 
-    env.close() # Close the environment
-
     # Save the trained model
     torch.save(ppo.policy.state_dict(), 'RLCoursework/trained_models/ppo_policy_state.pth')
 
     return rewards_to_plot
 
 if __name__ == '__main__':
+    env = gym.make('Ant-v4') # Start environment
+
+    # Seeding to replicate results (using 0, 1, and 2)
+    np.random.seed(0)
+    torch.manual_seed(0)
+
     # Train and store average rewards
-    rewards_to_plot = train()
+    rewards_to_plot = train(env)
+
+    env.close() # Close environment
 
     # Plotting results
     # Calculate total and rolling rewards in DataFrame

@@ -14,13 +14,13 @@ class ActorCritic(torch.nn.Module):
         super(ActorCritic, self).__init__()
 
         layers = [
-            nn.Linear(inputDims, 256),
+            nn.Linear(inputDims, 64),
             nn.ReLU(),
-            nn.Linear(256, 256),
+            nn.Linear(64, 64),
             nn.ReLU(),
-            nn.Linear(256, 128),
+            nn.Linear(64, 32),
             nn.ReLU(),
-            nn.Linear(128, 32)
+            nn.Linear(32, 32)
         ]
 
         self.model = torch.nn.Sequential(*layers)
@@ -42,11 +42,11 @@ class ActorCritic(torch.nn.Module):
 
     def forward(self, state):
         """Performs forward pass through network."""
-        # contains the actual values at nodes
+        # Contains the actual values at nodes
         x = self.model(torch.tensor(state))
 
         # Mean and standard deviation of predicted best action are
-        #  returned, to allow for sampling from normal distribution
+        # returned, to allow for sampling from normal distribution
         means = self.modelMean(x)
         epsilon = 1e-6  # Small constant to prevent zero or very small stdDev
         stdDevs = torch.log(1 + torch.exp(self.modelStdDev(x))) + epsilon
@@ -131,6 +131,10 @@ def plot(agent):
 
 env = gym.make('Ant-v4')
 
+# Seeding to replicate results (using 0, 1, and 2)
+np.random.seed(0)
+torch.manual_seed(0)
+
 # Number of episodes to train for
 totalNumEpisodes = 10000
 inputDims = env.observation_space.shape[0]
@@ -169,12 +173,12 @@ env = gym.make("Ant-v4", render_mode = "human")
 
 # Keep running algorithm
 for i in range(totalNumEpisodes):
-    state, info = env.reset()
+    state, _ = env.reset()
 
     terminated = False
     while not terminated:
         action = agent.chooseAction(state)
-        state, reward, terminated, truncated, info = env.step(action)
+        state, reward, terminated, truncated, _ = env.step(action)
         agent.rewards.append(reward)
 
     agent.updateNetwork()

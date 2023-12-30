@@ -149,7 +149,7 @@ class A2C():
             terminateds = []
 
             # Resets the environment, then runs until terminated or truncated
-            state, _ = env.reset()
+            state, _ = env.reset(seed=0)
             terminated = False
             truncated = False
 
@@ -179,7 +179,7 @@ class A2C():
                     print(np.sum(rewards))
                     #x = input()
                     # Every 100 episodes print out average reward
-                    if episode % 10 == 0:                    
+                    if episode % 100 == 0:                    
                         print("episode: {}, reward: {}, average reward: {}".format(episode, np.sum(rewards), self.averageRewards[-1]))
                     break
                 
@@ -213,9 +213,10 @@ class A2C():
 if __name__ == "__main__":
     env = gym.make("Ant-v4", healthy_z_range = (0.5, 1), render_mode = "human", exclude_current_positions_from_observation=False)
 
+    # Seeding to replicate results (using 0, 1, and 2)
     np.random.seed(0)
     torch.manual_seed(0)
-    env.reset(seed=2)
+    env.reset(seed=0)
 
     a2c = A2C(env)
     a2c.main(env)
@@ -224,7 +225,7 @@ if __name__ == "__main__":
     env.close()
     
     env = gym.make("Ant-v4", healthy_z_range = (0.5, 1), render_mode = "human")
-    env.reset(seed=2)
+    env.reset(seed=0)
     a2c.main(env)
 
     # Close the environment

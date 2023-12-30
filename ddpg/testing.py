@@ -19,7 +19,10 @@ class ActorNetwork(torch.nn.Module):
             nn.Tanh(),
             nn.Linear(64, 64),
             nn.Tanh(),
-            nn.Linear(64, action_dim)
+            nn.Linear(64, 32),
+            nn.Tanh(),
+            nn.Linear(32, action_dim),
+            nn.Tanh(),
         )
         
         self.optimizer = torch.optim.Adam(self.parameters(), lr=0.003)
@@ -69,10 +72,10 @@ def test_model():
     while True:
         # Get action from policy
         with torch.no_grad():
-            action, _ = loaded_pi1.ChooseAction(state)
-        
+            action = loaded_pi1.ChooseAction(state)
+
         # Step in the environment
-        state, _, terminated, truncated, _ = env.step(action.cpu().numpy())
+        state, _, terminated, truncated, _ = env.step(action)
 
         if terminated or truncated:
             state, _ = env.reset()

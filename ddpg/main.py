@@ -23,7 +23,9 @@ class ActorNetwork(torch.nn.Module):
             nn.Tanh(),
             nn.Linear(64, 64),
             nn.Tanh(),
-            nn.Linear(64, action_dim)
+            nn.Linear(64, 32),
+            nn.Tanh(),
+            nn.Linear(32, action_dim)
         )
         
         self.optimizer = torch.optim.Adam(self.parameters(), lr=0.003)
@@ -68,7 +70,9 @@ class CriticNetwork(torch.nn.Module):
             nn.Tanh(),
             nn.Linear(64, 64),
             nn.Tanh(),
-            nn.Linear(64, 1)
+            nn.Linear(64, 32),
+            nn.Tanh(),
+            nn.Linear(32, action_dim)
         )
         
         self.optimizer = torch.optim.Adam(self.parameters(), lr=0.003)
@@ -97,13 +101,17 @@ env = gym.make('Ant-v4', healthy_z_range=(0.5, 1.0))
 state_dim = env.observation_space.shape[0]
 action_dim = env.action_space.shape[0] 
 
+# Seeding to replicate results (using 0, 1, and 2)
+np.random.seed(0)
+torch.manual_seed(0)
+
 # Allows agent to wander randomly for some time steps
 observation, info = env.reset()
 for i in range(100):
     state = observation
     action = np.random.random_sample(size = 8)
     action = (action - 0.5) * 2 # Scales properly (1.0, 1.0)
-    observation, reward, terminated, truncated, info = env.step(action)
+    observation, reward, terminated, truncated, _ = env.step(action)
     D.append([state, action, reward, observation])
 
 pi1 = ActorNetwork(state_dim, action_dim).to(device)
@@ -118,7 +126,7 @@ rewards_to_plot = list()
 rewards = list()
 
 # Main loop iterating over each episode
-for episode in range(10000):
+for episode in range(1000):
     observation, _ = env.reset()
     total_rewards = 0
 
@@ -157,7 +165,6 @@ for episode in range(10000):
 
         # Ends the episode
         if terminated or truncated:
-            observation, _ = env.reset()
             break
 
     # Store total rewards for episode
