@@ -160,7 +160,7 @@ def train(env):
     gamma = 0.9
     epochs = 3 # stabilises the policy calculation
     eps_clip = 0.2 # limits policy update 
-    episodes = 5000 # max training episodes
+    episodes = 10000 # max training episodes
     update_timestep = 2048 # update policy every n timesteps
 
     ppo = PPO(state_dim, action_dim, learning_rate, gamma, epochs, eps_clip)

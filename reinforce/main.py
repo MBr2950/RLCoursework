@@ -129,7 +129,7 @@ def plot(agent):
     matplotlib.pyplot.ylabel('Reward')
     matplotlib.pyplot.show()
 
-env = gym.make('Ant-v4')
+env = gym.make('Ant-v4', healthy_z_range=(0.5, 1.0))
 
 # Seeding to replicate results (using 0, 1, and 2)
 np.random.seed(0)
@@ -172,16 +172,10 @@ env.close()
 env = gym.make("Ant-v4", render_mode = "human")
 
 # Keep running algorithm
-for i in range(totalNumEpisodes):
+while True:
     state, _ = env.reset()
 
     terminated = False
-    while not terminated:
+    while not terminated or truncated:
         action = agent.chooseAction(state)
-        state, reward, terminated, truncated, _ = env.step(action)
-        agent.rewards.append(reward)
-
-    agent.updateNetwork()
-
-# Close the environment
-env.close()
+        state, _, _, _, _ = env.step(action)
