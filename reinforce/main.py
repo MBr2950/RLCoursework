@@ -1,4 +1,5 @@
 # Based off https://gymnasium.farama.org/tutorials/training_agents/reinforce_invpend_gym_v26/#sphx-glr-tutorials-training-agents-reinforce-invpend-gym-v26-py
+# Performance changes dependent on max steps per episode
 
 import gymnasium as gym
 import numpy as np
