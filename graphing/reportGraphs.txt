@@ -1,0 +1,32 @@
+GRAPHS FOR REPORT
+
+GRAPH 1: (Best of all graphs)
+DDPG
+REINFORCE
+A2C
+PPO
+Random
+
+GRAPH 2:
+DDPG
+DDPG (w/simulated annealing)
+DDPG (w/sm + reward scaling) [MAYBE EXCLUDE]
+Random
+
+GRAPH 3:
+REINFORCE
+REINFORCE (w/different network size)
+REINFORCE (w/different network size)
+Random
+
+GRAPH 4:
+A2C (w/TD Advantage)
+A2C (w/TDA + reward scaling) [MAYBE EXCLUDE]
+A2C (w/GAE - smaller network)
+A2C (w/GAE - larger network)
+
+GRAPH 5:
+PPO 
+PPO (w/different network size)
+PPO (w/different network size)
+Random
