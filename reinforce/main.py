@@ -2,10 +2,12 @@
 
 import gymnasium as gym
 import numpy as np
-import torch, pandas, seaborn
+import pandas as pd
+import seaborn as sns
+import torch
 from torch import nn
 from torch.optim import Adam
-import matplotlib.pyplot
+import matplotlib.pyplot as plt
 
 # Actor neural network for function approximation
 class ActorCritic(torch.nn.Module):
@@ -35,7 +37,7 @@ class ActorCritic(torch.nn.Module):
             torch.nn.Linear(32, outputDims)
         )
 
-        self.optimizer = Adam(self.parameters(), lr=0.003)
+        self.optimizer = Adam(self.parameters(), lr=0.0003)
 
         # Avoids type issues
         self.double()
@@ -67,7 +69,7 @@ class REINFORCE:
         self.outputDims = outputDims # Number of actions
 
         # Hyperparameters set arbitrarily
-        self.gamma = 0.9
+        self.gamma = 0.95
 
         self.probabilities = [] # stores the probability of taking a given action
         self.rewards = [] # stores the reward of that action
@@ -129,17 +131,20 @@ def plot(agent):
     matplotlib.pyplot.ylabel('Reward')
     matplotlib.pyplot.show()
 
-env = gym.make('Ant-v4', healthy_z_range=(0.5, 1.0))
+env = gym.make('Ant-v4', healthy_z_range=(0.5, 1.0), render_mode = "human")
 
 # Seeding to replicate results (using 0, 1, and 2)
 np.random.seed(0)
 torch.manual_seed(0)
+env.reset(seed=4)
 
 # Number of episodes to train for
-totalNumEpisodes = 10000
+totalNumEpisodes = 1000
+max_steps = 1000
 inputDims = env.observation_space.shape[0]
 outputDims = env.action_space.shape[0]
-totalRewards = []
+totalRewards = 0
+rewards_to_plot = []
 
 agent = REINFORCE(inputDims, outputDims)
 
@@ -149,18 +154,26 @@ for episode in range(totalNumEpisodes):
     state, _ = env.reset()
 
     terminated = False
-    while not terminated:
+    steps = 0
+    total_rewards = 0
+    while not terminated and steps < max_steps:
         # Choose an action based on the state, observe result, update network
         action = agent.chooseAction(state)
         state, reward, terminated, truncated, _ = env.step(action)
+        total_rewards += reward
         agent.rewards.append(reward)
+        steps += 1
+    #print(steps)
 
     agent.updateNetwork()
 
+    rewards_to_plot.append(total_rewards)
+    print(total_rewards)
+
     # Print average reward every 100 episodes
-    if episode % 100 == 0:
+    if episode % 10 == 0:
         try:
-            averageReward = np.mean(agent.fullRewards[episode - 100:])
+            averageReward = np.mean(agent.fullRewards[episode - 10:])
         except:
             averageReward = 0
         print("Episode:", episode, "Average Reward:", averageReward)
@@ -168,14 +181,17 @@ for episode in range(totalNumEpisodes):
 # Close the environment
 env.close()
 
-# Create a new environment, this one will render episodes to show result of training
-env = gym.make("Ant-v4", render_mode = "human")
-
-# Keep running algorithm
-while True:
-    state, _ = env.reset()
-
-    terminated = False
-    while not terminated or truncated:
-        action = agent.chooseAction(state)
-        state, _, _, _, _ = env.step(action)
+# Plotting results
+# Calculate total and rolling rewards in DataFrame
+df = pd.DataFrame({'Episode': range(1, len(rewards_to_plot) + 1), 'Total Reward': rewards_to_plot})
+df['Rolling Avg Reward'] = df['Total Reward'].rolling(window=100).mean()
+# Plot total and rolling rewards
+sns.set(style="darkgrid", context="talk", palette="rainbow")
+plt.figure(figsize=(12, 6))
+sns.lineplot(x='Episode', y='Total Reward', data=df, label='Total Reward', color='blue')
+sns.lineplot(x='Episode', y='Rolling Avg Reward', data=df, label='Average Reward (100 episodes)', color='red')
+# Set plot title and labels
+plt.title("Training REINFORCE for Ant-v4")
+plt.xlabel("Episode")
+plt.ylabel("Reward")
+plt.show()
