@@ -38,15 +38,15 @@ class ActorNetwork(torch.nn.Module):
     
     def Update(self, values):
         """Trains the network."""
-        # Where E and E1 represent Expected Value (E is working value, E1 has correct datatype)
+        # Where E represents Expected Value, and loss has the correct data type.
         values = values.detach().numpy()
         self.optimizer.zero_grad()
         E = 0
         for i in range(len(values)):
             E += (i + 1) * values[i]
-        E1 = torch.tensor(E, requires_grad=True)
-        E1.backward()
-        E1 = -E1
+        loss = torch.tensor(E, requires_grad=True)
+        loss = -loss
+        loss.backward()
         self.optimizer.step()
         
 
