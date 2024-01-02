@@ -51,14 +51,17 @@ class ActorNetwork(torch.nn.Module):
         
 
     def Refresh(self, pi):
-        #Updates pi2 to match pi1
+    #Updates pi2 to match pi1
+
+        #Title:            [enhancement] Polyak Averaging could be done faster
+        #Author:           Quinn Sinclair
+        #Date:             09/07/20
+        #Available From:   https://github.com/DLR-RM/stable-baselines3/issues/93 
+        #Access Date:      02/12/23
         for param1, param2 in zip(self.parameters(), pi.parameters()):
-            param1 = beta * param1.data + (1-beta) * param2.data
+            param1.data.mul_(1-beta)
+            param1.data.add_(beta*param2.data)
 
-       #Method inspired by:
-       #https://github.com/DLR-RM/stable-baselines3/issues/93
-
-         
 ## Defining the Critic class
 class CriticNetwork(torch.nn.Module):
     def __init__(self, state_dim, action_dim):
@@ -90,8 +93,15 @@ class CriticNetwork(torch.nn.Module):
         
     def Refresh(self, q):
         """Updates q2 to match q1."""
-        for param1, param2 in zip(self.parameters(), q.parameters()):
-            param1 = beta * param1.data + (1-beta) * param2.data
+        
+        #Title:            [enhancement] Polyak Averaging could be done faster
+        #Author:           Quinn Sinclair
+        #Date:             09/07/20
+        #Available From:   https://github.com/DLR-RM/stable-baselines3/issues/93 
+        #Access Date:      02/12/23
+        for param1, param2 in zip(self.parameters(), pi.parameters()):
+            param1.data.mul_(1-beta)
+            param1.data.add_(beta*param2.data)
 
 # Replay memory- holds all transition information (limited at maxlength):
 # Holds queue of multiple: [0-State, 1-Action, 2-Reward, 3-Observation]
