@@ -99,7 +99,7 @@ class CriticNetwork(torch.nn.Module):
         #Date:             09/07/20
         #Available From:   https://github.com/DLR-RM/stable-baselines3/issues/93 
         #Access Date:      02/12/23
-        for param1, param2 in zip(self.parameters(), pi.parameters()):
+        for param1, param2 in zip(self.parameters(), q.parameters()):
             param1.data.mul_(1-beta)
             param1.data.add_(beta*param2.data)
 
