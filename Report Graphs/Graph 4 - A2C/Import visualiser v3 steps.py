@@ -4,175 +4,175 @@ import numpy as np
 import json
 
 rewards1 = {}
-with open('REINFORCE1steps.json', 'r') as file:
+with open('A2C1steps.json', 'r') as file:
     rewards1 = json.load(file)
 
 rewards1a = {}
-with open('REINFORCE2steps.json', 'r') as file:
+with open('A2C2steps.json', 'r') as file:
     rewards1a = json.load(file)
 
 rewards1.update(rewards1a)
 
 rewards1b = {}
-with open('REINFORCE3steps.json', 'r') as file:
+with open('A2C3steps.json', 'r') as file:
     rewards1b = json.load(file)
 
 rewards1.update(rewards1b)
 
 rewards1c = {}
-with open('REINFORCE4steps.json', 'r') as file:
+with open('A2C4steps.json', 'r') as file:
     rewards1c = json.load(file)
 
 rewards1.update(rewards1c)
 
 rewards1d = {}
-with open('REINFORCE5steps.json', 'r') as file:
+with open('A2C5steps.json', 'r') as file:
     rewards1d = json.load(file)
 
 rewards1.update(rewards1d)
 
 rewards1e = {}
-with open('REINFORCE6steps.json', 'r') as file:
+with open('A2C6steps.json', 'r') as file:
     rewards1e = json.load(file)
 
 rewards1.update(rewards1e)
 
 rewards1f = {}
-with open('REINFORCE7steps.json', 'r') as file:
+with open('A2C7steps.json', 'r') as file:
     rewards1f = json.load(file)
 
 rewards1.update(rewards1f)
 
 rewards1g = {}
-with open('REINFORCE8steps.json', 'r') as file:
+with open('A2C8steps.json', 'r') as file:
     rewards1g = json.load(file)
 
 rewards1.update(rewards1g)
 
 rewards1h = {}
-with open('REINFORCE9steps.json', 'r') as file:
+with open('A2C9steps.json', 'r') as file:
     rewards1h = json.load(file)
 
 rewards1.update(rewards1h)
 
 rewards1i = {}
-with open('REINFORCE10steps.json', 'r') as file:
+with open('A2C10steps.json', 'r') as file:
     rewards1i = json.load(file)
 
 rewards1.update(rewards1i)
 
 rewards2 = {}
-with open('REINFORCE11steps.json', 'r') as file:
+with open('A2C11steps.json', 'r') as file:
     rewards2 = json.load(file)
 
 rewards2a = {}
-with open('REINFORCE12steps.json', 'r') as file:
+with open('A2C12steps.json', 'r') as file:
     rewards2a = json.load(file)
 
 rewards2.update(rewards2a)
 
 rewards2b = {}
-with open('REINFORCE13steps.json', 'r') as file:
+with open('A2C13steps.json', 'r') as file:
     rewards2b = json.load(file)
 
 rewards2.update(rewards2b)
 
 rewards2c = {}
-with open('REINFORCE14steps.json', 'r') as file:
+with open('A2C14steps.json', 'r') as file:
     rewards2c = json.load(file)
 
 rewards2.update(rewards2c)
 
 rewards2d = {}
-with open('REINFORCE15steps.json', 'r') as file:
+with open('A2C15steps.json', 'r') as file:
     rewards2d = json.load(file)
 
 rewards2.update(rewards2d)
 
 rewards2e = {}
-with open('REINFORCE16steps.json', 'r') as file:
+with open('A2C16steps.json', 'r') as file:
     rewards2e = json.load(file)
 
 rewards2.update(rewards2e)
 
 rewards2f = {}
-with open('REINFORCE17steps.json', 'r') as file:
+with open('A2C17steps.json', 'r') as file:
     rewards2f = json.load(file)
 
 rewards2.update(rewards2f)
 
 rewards2g = {}
-with open('REINFORCE18steps.json', 'r') as file:
+with open('A2C18steps.json', 'r') as file:
     rewards2g = json.load(file)
 
 rewards2.update(rewards2g)
 
 rewards2h = {}
-with open('REINFORCE19steps.json', 'r') as file:
+with open('A2C19steps.json', 'r') as file:
     rewards2h = json.load(file)
 
 rewards2.update(rewards2h)
 
 rewards2i = {}
-with open('REINFORCE20steps.json', 'r') as file:
+with open('A2C20steps.json', 'r') as file:
     rewards2i = json.load(file)
 
 rewards2.update(rewards2i)
 
 rewards3 = {}
-with open('REINFORCE21steps.json', 'r') as file:
+with open('A2C21steps.json', 'r') as file:
     rewards3 = json.load(file)
 
 rewards3a = {}
-with open('REINFORCE22steps.json', 'r') as file:
+with open('A2C22steps.json', 'r') as file:
     rewards3a = json.load(file)
 
 rewards3.update(rewards3a)
 
 rewards3b = {}
-with open('REINFORCE23steps.json', 'r') as file:
+with open('A2C23steps.json', 'r') as file:
     rewards3b = json.load(file)
 
 rewards3.update(rewards3b)
 
 rewards3c = {}
-with open('REINFORCE24steps.json', 'r') as file:
+with open('A2C24steps.json', 'r') as file:
     rewards3c = json.load(file)
 
 rewards3.update(rewards3c)
 
 rewards3d = {}
-with open('REINFORCE25steps.json', 'r') as file:
+with open('A2C25steps.json', 'r') as file:
     rewards3d = json.load(file)
 
 rewards3.update(rewards3d)
 
 rewards3e = {}
-with open('REINFORCE26steps.json', 'r') as file:
+with open('A2C26steps.json', 'r') as file:
     rewards3e = json.load(file)
 
 rewards3.update(rewards3e)
 
 rewards3f = {}
-with open('REINFORCE27steps.json', 'r') as file:
+with open('A2C27steps.json', 'r') as file:
     rewards3f = json.load(file)
 
 rewards3.update(rewards3f)
 
 rewards3g = {}
-with open('REINFORCE28steps.json', 'r') as file:
+with open('A2C28steps.json', 'r') as file:
     rewards3g = json.load(file)
 
 rewards3.update(rewards3g)
 
 rewards3h = {}
-with open('REINFORCE29steps.json', 'r') as file:
+with open('A2C29steps.json', 'r') as file:
     rewards3h = json.load(file)
 
 rewards3.update(rewards3h)
 
 rewards3i = {}
-with open('REINFORCE30steps.json', 'r') as file:
+with open('A2C30steps.json', 'r') as file:
     rewards3i = json.load(file)
 
 rewards3.update(rewards3i)
@@ -283,18 +283,18 @@ peak_index_grey = rolling_avg_grey.idxmax()
 plt.figure(figsize=(10, 6))
 plt.plot(smoothed_min_green.index, smoothed_min_green, color='green', alpha=0.2, linewidth=0.5)
 plt.plot(smoothed_max_green.index, smoothed_max_green, color='green', alpha=0.2, linewidth=0.5)
-plt.plot(rolling_avg_green.index, rolling_avg_green, label='REINFORCE1 (27-64-64-32-32)', color='green')
+plt.plot(rolling_avg_green.index, rolling_avg_green, label='A2C (TD Advantage) (27-64-64-32-32)', color='green')
 plt.fill_between(smoothed_min_green.index, smoothed_min_green, smoothed_max_green, color='green', alpha=0.1)
 
 plt.plot(smoothed_min_blue.index, smoothed_min_blue, color='blue', alpha=0.2, linewidth=0.5)
 plt.plot(smoothed_max_blue.index, smoothed_max_blue, color='blue', alpha=0.2, linewidth=0.5)
-plt.plot(rolling_avg_blue.index, rolling_avg_blue, label='REINFORCE2 (27-128-64-32)', color='blue')
+plt.plot(rolling_avg_blue.index, rolling_avg_blue, label='A2C (GAE) (27-64-64-32-32)', color='blue')
 plt.fill_between(smoothed_min_blue.index, smoothed_min_blue, smoothed_max_blue, color='blue', alpha=0.1)
 
-plt.plot(smoothed_min_gold.index, smoothed_min_gold, color='purple', alpha=0.2, linewidth=0.5)
-plt.plot(smoothed_max_gold.index, smoothed_max_gold, color='purple', alpha=0.2, linewidth=0.5)
-plt.plot(rolling_avg_gold.index, rolling_avg_gold, label='REINFORCE3 (27-256-64-32)', color='purple')
-plt.fill_between(smoothed_min_gold.index, smoothed_min_gold, smoothed_max_gold, color='purple', alpha=0.1)
+#plt.plot(smoothed_min_gold.index, smoothed_min_gold, color='purple', alpha=0.2, linewidth=0.5)
+#plt.plot(smoothed_max_gold.index, smoothed_max_gold, color='purple', alpha=0.2, linewidth=0.5)
+#plt.plot(rolling_avg_gold.index, rolling_avg_gold, label='A2C3 (27-256-64-32)', color='purple')
+#plt.fill_between(smoothed_min_gold.index, smoothed_min_gold, smoothed_max_gold, color='purple', alpha=0.1)
 
 plt.plot(smoothed_min_grey.index, smoothed_min_grey, color='black', alpha=0.2, linewidth=0.5)
 plt.plot(smoothed_max_grey.index, smoothed_max_grey, color='black', alpha=0.2, linewidth=0.5)
@@ -307,7 +307,7 @@ plt.axhline(0, color='black', linewidth=0.8)
 for episode in range(0, len(rewards1['Run 1']), 100):  # Adjust the step size as needed
     plt.axvline(episode, color='gray', linestyle=':', linewidth=0.8)
 
-plt.axhline(rolling_avg_green.loc[peak_index_green], color='red', linestyle='--', linewidth=2)
+plt.axhline(rolling_avg_blue.loc[peak_index_blue], color='red', linestyle='--', linewidth=2)
 
 plt.xlabel('Episode')
 plt.ylabel('Steps')
