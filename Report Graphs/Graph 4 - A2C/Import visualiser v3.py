@@ -291,11 +291,6 @@ plt.plot(smoothed_max_blue.index, smoothed_max_blue, color='blue', alpha=0.2, li
 plt.plot(rolling_avg_blue.index, rolling_avg_blue, label='A2C (GAE) (27-64-64-32-32)', color='blue')
 plt.fill_between(smoothed_min_blue.index, smoothed_min_blue, smoothed_max_blue, color='blue', alpha=0.1)
 
-#plt.plot(smoothed_min_gold.index, smoothed_min_gold, color='purple', alpha=0.2, linewidth=0.5)
-#plt.plot(smoothed_max_gold.index, smoothed_max_gold, color='purple', alpha=0.2, linewidth=0.5)
-#plt.plot(rolling_avg_gold.index, rolling_avg_gold, label='A2C (GAE) (27-64-64-32-64)', color='purple')
-#plt.fill_between(smoothed_min_gold.index, smoothed_min_gold, smoothed_max_gold, color='purple', alpha=0.1)
-
 plt.plot(smoothed_min_grey.index, smoothed_min_grey, color='black', alpha=0.2, linewidth=0.5)
 plt.plot(smoothed_max_grey.index, smoothed_max_grey, color='black', alpha=0.2, linewidth=0.5)
 plt.plot(rolling_avg_grey.index, rolling_avg_grey, label='Random Agent', color='black')
