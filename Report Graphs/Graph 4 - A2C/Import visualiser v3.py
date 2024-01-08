@@ -241,7 +241,7 @@ df_blue = pd.DataFrame(rewards2)
 df_gold = pd.DataFrame(rewards3)
 df_grey = pd.DataFrame(rewards4)
 
-# Display min, max, average, and rolling across iterations for Algorithms
+
 rolling_min_green = df_green.min(axis=1)
 rolling_max_green = df_green.max(axis=1)
 rolling_avg_green = df_green.mean(axis=1).rolling(window=20, min_periods=1).mean()
@@ -258,7 +258,7 @@ rolling_min_grey = df_grey.min(axis=1)
 rolling_max_grey = df_grey.max(axis=1)
 rolling_avg_grey = df_grey.mean(axis=1).rolling(window=20, min_periods=1).mean()
 
-# Apply a moving average to min and max values for smoothing
+
 smoothed_min_green = rolling_min_green.rolling(window=20, min_periods=1).mean()
 smoothed_max_green = rolling_max_green.rolling(window=20, min_periods=1).mean()
 
@@ -304,7 +304,7 @@ plt.fill_between(smoothed_min_grey.index, smoothed_min_grey, smoothed_max_grey, 
 # Add vertical lines at each episode
 plt.xlim(0, len(rewards1['Run 1']))
 plt.axhline(0, color='black', linewidth=0.8)
-for episode in range(0, len(rewards1['Run 1']), 100):  # Adjust the step size as needed
+for episode in range(0, len(rewards1['Run 1']), 100): 
     plt.axvline(episode, color='gray', linestyle=':', linewidth=0.8)
 
 plt.axhline(rolling_avg_blue.loc[peak_index_blue], color='red', linestyle='--', linewidth=2)
